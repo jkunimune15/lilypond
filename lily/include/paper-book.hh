@@ -27,10 +27,13 @@
     exports them to the output backend, either as systems or as
     completely formatted pages.  */
 
-class Paper_book
+class Paper_book : public Smob<Paper_book>
 {
-  DECLARE_SMOBS (Paper_book);
-
+public:
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Paper_book ();
+private:
   SCM systems_;
   SCM pages_;
   SCM performances_;
@@ -74,6 +77,5 @@ protected:
                    long *first_performance_number);
 };
 
-DECLARE_UNSMOB (Paper_book, paper_book)
 
 #endif /* PAPER_BOOK_HH */

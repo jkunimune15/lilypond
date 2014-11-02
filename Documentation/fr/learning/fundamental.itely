@@ -1,7 +1,7 @@
 @c -*- coding: utf-8; mode: texinfo; documentlanguage: fr -*-
 
 @ignore
-    Translation of GIT committish: d46572826e777ed3e9fa4656535a6e9000f2ed9e
+    Translation of GIT committish: b58a17a6b0b6f624cee7858a74092265e0791fe2
 
     When revising a translation, copy the HEAD committish of the
     version that you are working on.  For details, see the Contributors'
@@ -293,8 +293,8 @@ tout simplement qu'@strong{il n'y a pas} de mystère.  Allez,
 expliquons-le en une ligne :
 
 @quotation
-@emph{Un bloc @code{\score} doit commencer par une et une seule
-expression musicale.}
+@emph{Un bloc @code{\score} doit contenir une et une seule expression
+musicale.}
 @end quotation
 
 @noindent
@@ -525,7 +525,7 @@ une liste des différents types de crochet :
 
 D'autres constructions permettent d'obtenir des lignes regroupant ou en
 travers des notes :  les liaisons de prolongation indiquées par un tilde
-(@code{~}), les marques de nolet avec @code{\times x/y @{ @dots{} @}},
+(@code{~}), les marques de n-olet avec @code{\tuplet x/y @{ @dots{} @}},
 ou encore les notes d'ornement avec @code{\grace@{ @dots{} @}}.
 
 En dehors de LilyPond, l'imbrication correcte de différents types de
@@ -537,7 +537,7 @@ trois types de crochets utilisés pour @strong{délimiter} comme l'indique
 le tableau ci-dessus.  Une telle rigueur dans l'imbrication n'est
 @strong{pas} requise pour les types de crochets dont la fonction est de
 @strong{marquer}, selon le tableau ci-dessus, lorsqu'il sont utilisés en
-combinaison avec des liaisons de prolongation ou des nolets.  En effet,
+combinaison avec des liaisons de prolongation ou des n-olets.  En effet,
 il ne s'agit pas de crochets ayant pour fonction de borner quelque
 chose ; ils agissent plutôt comme marquant le début de quelque chose et
 sa fin.
@@ -551,7 +551,7 @@ g8\( a b[ c b\) a] g4
 @end lilypond
 
 De manière générale, différents types de crochets, notamment s'ils
-indiquent des nolets, liaisons de prolongation ou notes d'ornement,
+indiquent des n-olets, liaisons de prolongation ou notes d'ornement,
 peuvent se mélanger entre eux.  L'exemple suivant montre une ligature
 qui se prolonge sur un triolet (ligne 1), puis une liaison qui se
 prolonge sur un triolet (ligne 2) et enfin une ligature et une liaison
@@ -2516,8 +2516,15 @@ lower = \relative c, {
 }
 @end lilypond
 
-Aucun des modèles ne permet d'arriver exactement à cette mise en forme.
-Celui qui s'en rapprocherait le plus est 
+@warning{Cette présentation s'obtient facilement à l'aide du gabarit
+préprogrammé @code{satb.ly} -- voir @ref{Gabarits préprogrammés}.  Il
+masque, dans un but de simplification, totalement la structure des
+contextes nécessaires et les génère automatiquement.  Pour les besoins
+de la démonstration et à titre didactique nous procèderons ici pas à
+pas, ce gabarit préprogrammé ne correspondant pas forcément à vos
+attentes.}
+
+Le gabarit qui se rapprocherait le plus de cette mise en forme est
 @ref{Partition pour chœur SATB avec réduction pour piano} -- voir
 @ref{Modèles pour ensemble vocal} -- mais encore faudrait-il en
 modifier la mise en forme et refaire la partie de piano qui n'est
@@ -2809,7 +2816,7 @@ première partie du manuel requiert deux voix et la seconde une seule.
 \new PianoStaff <<
   \new Staff = "ManuelUn" <<
     \new Voice @{
-      \ManuelUnVoixUnMusique 
+      \ManuelUnVoixUnMusique
     @}
     \new Voice @{
       \ManuelUnVoixDeuxMusique
@@ -2937,7 +2944,7 @@ sous-propriété @code{stretchability}.  Les impatients trouveront les
 valeurs par défaut de la propriété @code{staff-staff-spacing} dans le
 fichier @file{scm/define-grobs.scm}, en examinant la définition du
 @emph{grob} @code{VerticalAxisGroup}.  La valeur que nous affecterons à
-@code{stretchability} est celle que contient la définition du contexte 
+@code{stretchability} est celle que contient la définition du contexte
 @code{PianoStaff} telle qu'elle apparaît dans le fichier
 @file{ly/engraver-init.ly}).
 
@@ -3131,9 +3138,6 @@ violin = \relative c'' @{
 @}
 @end example
 
-@c TODO Replace the following with a better example  -td
-@c Skylining handles this correctly without padText
-
 Jusqu'ici nous avons vu des substitutions statiques : quand LilyPond
 rencontre @code{\padText}, il le remplace par le contenu que nous lui
 avons défini -- c'est-à-dire le contenu à droite de @code{padText=}.
@@ -3150,12 +3154,12 @@ padText =
      \once \override TextScript.padding = #padding
    #})
 
-\relative c''' {
-  c4^"piu mosso" b a b |
+\relative c'' {
+  c4^"piu mosso" b a b
   \padText #1.8
-  c4^"piu mosso" d e f |
+  c4^"piu mosso" b a b
   \padText #2.6
-  c4^"piu mosso" fis a g |
+  c4^"piu mosso" b a b
 }
 @end lilypond
 
@@ -3292,4 +3296,3 @@ ce qui équivaut à
   }
 >>
 @end lilypond
-

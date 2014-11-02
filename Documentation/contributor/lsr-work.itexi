@@ -17,7 +17,7 @@
 @section Introduction to LSR
 
 The
-@uref{http://lsr.dsi.unimi.it/, LilyPond Snippet Repository (LSR)}
+@uref{http://lsr.di.unimi.it/, LilyPond Snippet Repository (LSR)}
 is a collection of lilypond examples.  A subset of these examples
 are automatically imported into the documentation, making it easy
 for users to contribute to the docs without learning Git and
@@ -31,7 +31,7 @@ Texinfo.
 
 When you create (or find!) a nice snippet, if it is supported by
 the LilyPond version running on the LSR, please add it to the LSR.
-Go to @uref{http://lsr.dsi.unimi.it/, LSR} and log in -- if you haven't
+Go to @uref{http://lsr.di.unimi.it/, LSR} and log in -- if you haven't
 already, create an account.  Follow the instructions on the website.
 These instructions also explain how to modify existing snippets.
 
@@ -108,7 +108,7 @@ filename.
 @section Approving snippets
 
 The main task of LSR editors is approving snippets.  To find a list of
-unapproved snippets, log into @uref{http://lsr.dsi.unimi.it/, LSR} and
+unapproved snippets, log into @uref{http://lsr.di.unimi.it/, LSR} and
 select @qq{No} from the dropdown menu to the right of the word
 @qq{Approved} at the bottom of the interface, then click
 @qq{Enable filter}.
@@ -198,7 +198,7 @@ Next, download the updated snippets and run @command{makelsr.py}
 against them.  From the top source directory, run:
 
 @smallexample
-wget http://lsr.dsi.unimi.it/download/lsr-snippets-docs-`date +%F`.tar.gz
+wget http://lsr.di.unimi.it/download/lsr-snippets-docs-`date +%F`.tar.gz
 tar -xzf lsr-snippets-docs-`date +%F`.tar.gz
 make -C $LILYPOND_BUILD_DIR
 scripts/auxiliar/makelsr.py lsr-snippets-docs-`date +%F`
@@ -360,7 +360,7 @@ updating the binary running the LSR.
 
 @item
 Download the latest snippet tarball from
-@uref{http://lsr.dsi.unimi.it/download/} and extract it.
+@uref{http://lsr.di.unimi.it/download/} and extract it.
 The relevant files can be found in the @file{all} subdirectory.
 Make sure your shell is using an English language version, for
 example @code{LANG=en_US}, then run @command{convert-ly} on all
@@ -394,23 +394,8 @@ convert-ly -e -t2.14.2 *.ly
 
 @item
 There might be no conversion rule for some old commands. To make
-an initial check for possible problems you can run the following
-script on a copy of the @file{all} subdirectory:
-
-@example
-#!/bin/bash
-
-for LILYFILE in *.ly
-do
-  STEM=$(basename "$LILYFILE" .ly)
-  echo "running $LILYFILE..."
-  convert-ly -e -t<version> "$LILYFILE" >& "$STEM".txt
-done
-
-grep refer *.txt
-grep smart *.txt
-TODO: better script
-@end example
+an initial check for possible problems you can run the
+script at the end of this list on a copy of the @file{all} subdirectory.
 
 @item
 Copy relevant snippets (i.e. snippets whose version is equal to
@@ -475,29 +460,54 @@ step by step.
 @end enumerate
 
 
-Below is a shell script to run all @file{.ly} files in a directory
-and redirect terminal output to text files, which are then
-searched for the word "failed" to see which snippets do not compile.
+Below is a shell script to run LilyPond on all @file{.ly} files in a directory.
+If the script is run with a -s parameter, it runs silently except for reporting
+failed files.  If run with -c it also runs @code{convert-ly} prior to running
+LilyPond.
 
 @smallexample
 #!/bin/bash
 
-for LILYFILE in *.ly
-do
-  STEM=$(basename "$LILYFILE" .ly)
-  echo "running $LILYFILE..."
-  lilypond --format=png -ddelete-intermediate-files "$LILYFILE" >& "$STEM".txt
+while getopts sc opt; do
+    case $opt in
+        s)
+            silent=true
+            ;;
+        c)
+            convert=true
+            ;;
+    esac
 done
+param=$@
+if [ $silent ]; then
+    param=$@{param:3@}
+fi
+if [ $convert ]; then
+    param=$@{param:3@}
+fi
+filter=$@{param:-"*.ly"@}
 
-grep failed *.txt
-TODO: better script
+for LILYFILE in $filter
+do
+    STEM=$(basename "$LILYFILE" .ly)
+    if [ $convert ]; then
+        if [ $silent ]; then
+            $LILYPOND_BUILD_DIR/out/bin/convert-ly -e "$LILYFILE" >& "$STEM".con.txt
+        else
+            $LILYPOND_BUILD_DIR/out/bin/convert-ly -e "$LILYFILE"
+        fi
+    fi
+    if [ ! $silent ]; then
+        echo "running $LILYFILE..."
+    fi
+    $LILYPOND_BUILD_DIR/out/bin/lilypond --format=png "$LILYFILE" >& "$STEM".txt
+    RetVal=$?
+    if [ $RetVal -gt 0 ]; then
+       echo "$LILYFILE failed"
+    fi
+done
 @end smallexample
 
-Sometimes @code{grep failed *.txt} will not discover all
-problematic files. In addition you may want to use:
+Output from LilyPond is in @file{filename.txt} and convert-ly in
+@file{filename.con.txt}.
 
-@example
-grep ERROR *.txt
-grep error *.txt
-grep warning *.txt
-@end example

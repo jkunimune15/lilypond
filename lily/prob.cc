@@ -23,10 +23,8 @@
 #include "input.hh"
 #include "profile.hh"
 
-#include "ly-smobs.icc"
 
-IMPLEMENT_SMOBS (Prob);
-IMPLEMENT_TYPE_P (Prob, "ly:prob?");
+const char Prob::type_p_name_[] = "ly:prob?";
 
 SCM
 Prob::equal_p (SCM sa, SCM sb)
@@ -38,7 +36,7 @@ Prob::equal_p (SCM sa, SCM sb)
      equality; e.g., that two probs are equal iff they can be
      distinguished by calls to ly:prob-property.
   */
-  Prob *probs[2] = {unsmob_prob (sa), unsmob_prob (sb)};
+  Prob *probs[2] = {Prob::unsmob (sa), Prob::unsmob (sb)};
   SCM props[2][2];
   int i;
 
@@ -64,7 +62,7 @@ Prob::equal_p (SCM sa, SCM sb)
           SCM aval = scm_cdar (aprop);
           SCM bval = scm_cdar (bprop);
           if (scm_caar (aprop) != scm_caar (bprop)
-              || (!(unsmob_input (aval) && unsmob_input (bval))
+              || (!(Input::is_smob (aval) && Input::is_smob (bval))
                   &&
                   !to_boolean (scm_equal_p (aval, bval))))
             return SCM_BOOL_F;
@@ -78,9 +76,8 @@ Prob::equal_p (SCM sa, SCM sb)
   return SCM_BOOL_T;
 }
 
-Prob::Prob (SCM type, SCM immutable_init)
+Prob::Prob (SCM type, SCM immutable_init) : Smob<Prob> ()
 {
-  self_scm_ = SCM_EOL;
   mutable_property_alist_ = SCM_EOL;
   immutable_property_alist_ = immutable_init;
   type_ = type;
@@ -92,10 +89,10 @@ Prob::~Prob ()
 }
 
 Prob::Prob (Prob const &src)
+  : Smob<Prob> ()
 {
   immutable_property_alist_ = src.immutable_property_alist_;
   mutable_property_alist_ = SCM_EOL;
-  self_scm_ = SCM_EOL;
   type_ = src.type_;
 
   /* First we smobify_self, then we copy over the stuff.  If we don't,
@@ -117,28 +114,26 @@ Prob::derived_mark () const
 }
 
 SCM
-Prob::mark_smob (SCM smob)
+Prob::mark_smob ()
 {
-  ASSERT_LIVE_IS_ALLOWED (smob);
+  ASSERT_LIVE_IS_ALLOWED (self_scm ());
 
-  Prob *system = (Prob *) SCM_CELL_WORD_1 (smob);
-  scm_gc_mark (system->mutable_property_alist_);
-  system->derived_mark ();
+  scm_gc_mark (mutable_property_alist_);
+  derived_mark ();
 
-  return system->immutable_property_alist_;
+  return immutable_property_alist_;
 }
 
 int
-Prob::print_smob (SCM smob, SCM port, scm_print_state *)
+Prob::print_smob (SCM port, scm_print_state *)
 {
-  Prob *p = (Prob *) SCM_CELL_WORD_1 (smob);
   scm_puts ("#<", port);
   scm_puts ("Prob: ", port);
-  scm_display (p->type_, port);
+  scm_display (type_, port);
   scm_puts (" C++: ", port);
-  scm_puts (p->class_name (), port);
-  scm_display (p->mutable_property_alist_, port);
-  scm_display (p->immutable_property_alist_, port);
+  scm_puts (class_name (), port);
+  scm_display (mutable_property_alist_, port);
+  scm_display (immutable_property_alist_, port);
 
   scm_puts (" >\n", port);
   return 1;
@@ -200,4 +195,3 @@ Prob::name () const
   else
     return this->class_name ();
 }
-

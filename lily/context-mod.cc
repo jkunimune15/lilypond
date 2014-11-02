@@ -34,30 +34,21 @@ Context_mod::Context_mod (SCM mod_list)
   mods_ = scm_reverse (mod_list);
 }
 
-#include "ly-smobs.icc"
-IMPLEMENT_SIMPLE_SMOBS (Context_mod);
-IMPLEMENT_DEFAULT_EQUAL_P (Context_mod);
-IMPLEMENT_TYPE_P (Context_mod, "ly:context-mod?");
+const char Context_mod::type_p_name_[] = "ly:context-mod?";
 
 int
-Context_mod::print_smob (SCM smob, SCM port, scm_print_state *)
+Context_mod::print_smob (SCM port, scm_print_state *)
 {
-  Context_mod *me = (Context_mod *) SCM_CELL_WORD_1 (smob);
-
   scm_puts ("#<Context_mod ", port);
-  scm_display (me->get_mods (), port);
+  scm_display (get_mods (), port);
   scm_puts (">", port);
   return 1;
 }
 
 SCM
-Context_mod::mark_smob (SCM smob)
+Context_mod::mark_smob ()
 {
-  ASSERT_LIVE_IS_ALLOWED (smob);
-
-  Context_mod *me = (Context_mod *) SCM_CELL_WORD_1 (smob);
-
-  return me->mods_;
+  return mods_;
 }
 
 void
@@ -78,4 +69,3 @@ Context_mod::get_mods () const
 {
   return scm_reverse (mods_);
 }
-

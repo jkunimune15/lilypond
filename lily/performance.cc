@@ -97,9 +97,3 @@ void
 Performance::process ()
 {
 }
-
-Performance *
-unsmob_performance (SCM x)
-{
-  return dynamic_cast<Performance *> (unsmob_music_output (x));
-}

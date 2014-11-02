@@ -23,8 +23,12 @@
 #include "lily-proto.hh"
 #include "smobs.hh"
 
-class Spring
+class Spring : public Simple_smob<Spring>
 {
+public:
+  static SCM equal_p (SCM, SCM);
+  static const char type_p_name_[];
+private:
   Real distance_;
   Real min_distance_;
 
@@ -35,7 +39,6 @@ class Spring
 
   void update_blocking_force ();
 
-  DECLARE_SIMPLE_SMOBS (Spring);
 public:
   Spring ();
   Spring (Real distance, Real min_distance);
@@ -61,9 +64,7 @@ public:
   void operator *= (Real);
   bool operator > (Spring const &) const;
 };
-DECLARE_UNSMOB (Spring, spring);
 
 Spring merge_springs (vector<Spring> const &springs);
 
 #endif /* SPRING_HH */
-

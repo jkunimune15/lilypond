@@ -47,8 +47,13 @@ struct Translator_method_binding
   }
 };
 
-class Translator_group
+class Translator_group : public Smob<Translator_group>
 {
+public:
+  SCM mark_smob ();
+  int print_smob (SCM, scm_print_state *);
+  static const char type_p_name_[];
+  virtual ~Translator_group ();
 private:
   void precompute_method_bindings ();
   vector<Translator_method_binding>
@@ -62,10 +67,8 @@ private:
   DECLARE_LISTENER (create_child_translator);
 
 public:
-  VIRTUAL_COPY_CONSTRUCTOR (Translator_group, Translator_group);
-  DECLARE_SMOBS (Translator_group);
+  DECLARE_CLASSNAME (Translator_group);
 
-public:
   virtual void connect_to_context (Context *c);
   virtual void disconnect_from_context ();
   virtual SCM get_simple_trans_list ();
@@ -102,6 +105,5 @@ Translator_group *get_translator_group (SCM sym);
 #define foobar
 #define ADD_TRANSLATOR_GROUP(classname, desc, grobs, read, write) foobar
 
-DECLARE_UNSMOB (Translator_group, translator_group);
 
 #endif // TRANSLATOR_GROUP_HH

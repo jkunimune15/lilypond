@@ -4,8 +4,8 @@
 % and then run scripts/auxiliar/makelsr.py
 %
 % This file is in the public domain.
-%% Note: this file works from version 2.16.0
-\version "2.16.0"
+%% Note: this file works from version 2.19.7
+\version "2.19.7"
 
 \header {
 
@@ -184,7 +184,7 @@ position of middle C and key signature from @var{translator}'s context."
                                     0))
          (set! (ambitus-start-key-sig ambitus)
                (ly:context-property (ly:translator-context translator)
-                                    'keySignature)))))
+                                    'keyAlterations)))))
 
 #(define-method (update-ambitus-notes (ambitus <ambitus>) note-grob)
    "Update the upper and lower ambitus pithes of @var{ambitus}, using

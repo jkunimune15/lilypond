@@ -1,7 +1,7 @@
 @c -*- coding: utf-8; mode: texinfo; documentlanguage: fr -*-
 
 @ignore
-    Translation of GIT committish: 0a8b4e0f1b0d68659a584be48c7b96da358d501d
+    Translation of GIT committish: b58a17a6b0b6f624cee7858a74092265e0791fe2
 
     When revising a translation, copy the HEAD committish of the
     version that you are working on.  For details, see the Contributors'
@@ -387,10 +387,10 @@ Les micro-intervalles sont aussi exportés dans le fichier MIDI.
 Normalement, les altérations sont imprimées automatiquement, mais il se
 peut que vous vouliez les imprimer manuellement.  On peut forcer
 l'impression d'une altération, dite « de précaution », en ajoutant un
-point d'exclamation @code{!} après la hauteur de note.  Une
-altération entre parenthèses peut être obtenue en ajoutant un point
-d'interrogation @code{?} après la hauteur de note.  Ces signes
-peuvent aussi être utilisés pour imprimer des bécarres.
+point d'exclamation @code{!} après la hauteur de note.  Une altération
+entre parenthèses peut être obtenue en ajoutant un point
+d'interrogation @code{?} après la hauteur de note.  Ces signes peuvent
+aussi être utilisés pour imprimer des bécarres.
 
 @lilypond[verbatim,quote,relative=2]
 cis cis cis! cis? c c c! c?
@@ -896,7 +896,7 @@ music = \relative c' { c8. ees16( fis8. a16 b8.) gis16 f8. d16 }
 @knownissues
 Une liaison de prolongation à l'intérieur d'un bloc @code{\retrograde}
 sera de fait rompue, ce qui générera un message d'avertissement.
-Des liaisons de prolongation seront toutefois générées automatiquement 
+Des liaisons de prolongation seront toutefois générées automatiquement
 dès lors qu'est activé le @ref{Découpage automatique des notes}.
 
 @seealso
@@ -1070,16 +1070,28 @@ hauteurs.
 @translationof Clef
 
 @cindex clé de sol
+@cindex sol, clef de
 @cindex clé de fa
+@cindex fa, clef de
 @cindex clé d'ut
+@cindex ut, clef d'
 @cindex clés anciennes
+@cindex anciennes, clefs
 
 @funindex \clef
 @funindex clef
 
 La clef indique quelles lignes de la portée correspondent à quelles
-hauteurs.  Elle peut changer au fil du morceau, comme dans l'exemple
-suivant qui indique le do médium dans différentes clefs :
+hauteurs.  En l'absence de commande explicite, LilyPond utilise
+par défaut la clef de sol.
+
+@lilypond[verbatim,quote,relative=1,ragged-right]
+c2 c
+@end lilypond
+
+La clef se modifie à l'aide de la commande @code{\clef} suivie d'un nom
+approprié.  Pour chacun des exemples suivants est indiquée la position
+du do médium.
 
 @lilypond[verbatim,quote,relative=1]
 \clef treble
@@ -1092,36 +1104,20 @@ c2 c
 c2 c
 @end lilypond
 
-LilyPond met à votre disposition d'autres clefs :
+Les différents noms possibles sont répertoriés à l'annexe
+@ref{Styles de clef}.
 
-@lilypond[verbatim,quote,relative=1]
-\clef french
-c2 c
-\clef soprano
-c2 c
-\clef mezzosoprano
-c2 c
-\clef baritone
-c2 c
+Des clefs spéciales, telles que celles rencontrées en musique ancienne,
+sont abordées dans @ref{Clefs anciennes} et @ref{Clefs grégoriennes}.
+La musique requérant des clefs de tablature est traitée dans
+@ref{Tablatures par défaut} et @ref{Tablatures personnalisées}.
 
-\break
+@cindex Clef de citation
+@cindex Citation et clefs
 
-\clef varbaritone
-c2 c
-\clef subbass
-c2 c
-\clef percussion
-c2 c
-
-\break
-
-\clef G   % synonym for treble
-c2 c
-\clef F   % synonym for bass
-c2 c
-\clef C   % synonym for alto
-c2 c
-@end lilypond
+Les citations peuvent demander une modification de clef à l'aide des
+commandes @code{\cueClef} et @code{\cueDuringWithClef} -- voir
+@ref{Mise en forme d'une citation}.
 
 @cindex transposition et clef
 @cindex clef et transposition
@@ -1166,13 +1162,58 @@ c2 c
 Les hauteurs seront affichées comme si l'argument numérique
 n'avait pas été encadré de parenthèses ou crochets.
 
-Il existe d'autres clefs, destinées à un usage particulier.  Voir à ce
-sujet @ref{Notations anciennes}, @ref{Clefs anciennes},
-@ref{Clefs grégoriennes}, @ref{Tablatures par défaut} et
-@ref{Tablatures personnalisées}.  La nécessité de recourir à d'autres
-clefs dans le cas où la partition comprend des petites notes est abordée
-au chapitre @ref{Mise en forme d'une citation} -- voir les fonctions
-@code{\cueClef} et @code{\cueDuringWithClef}.
+Lorsqu'un changement de clef intervient en même temps qu'un saut de
+ligne, la nouvelle clef est imprimée à la fois en fin de ligne et au
+début de la suivante.  Vous pouvez toujours supprimer cette « clef de
+précaution ».
+
+@lilypond[verbatim,quote,relative=1]
+\clef treble { c2 c } \break
+\clef bass { c2 c } \break
+\clef alto
+  \set Staff.explicitClefVisibility = #end-of-line-invisible
+  { c2 c } \break
+  \unset Staff.explicitClefVisibility
+\clef bass { c2 c } \break
+@end lilypond
+
+Lorsqu'une clef a déjà été imprimée et qu'aucune autre clef n'a depuis
+été imprimée, LilyPond ignorera toute réitération de la commande
+@code{\clef}.  Forcer la réimpression de la clef s'obtient à l'aide de
+la commande @code{\set Staff.forceClef = ##t}.
+
+@lilypond[verbatim,quote,relative=1]
+  \clef treble
+  c1
+  \clef treble
+  c1
+  \set Staff.forceClef = ##t
+  c1
+  \clef treble
+  c1
+@end lilypond
+
+Le symbole imprimé lors d'un changement de clef est plus petit que la
+clef initiale.  La taille peut toutefois être ajustée.
+
+@lilypond[verbatim,quote,relative=1]
+  \clef "treble"
+  c1
+  \clef "bass"
+  c1
+  \clef "treble"
+  c1
+  \override Staff.Clef.full-size-change = ##t
+  \clef "bass"
+  c1
+  \clef "treble"
+  c1
+  \revert Staff.Clef.full-size-change
+  \clef "bass"
+  c1
+  \clef "treble"
+  c1
+@end lilypond
 
 @snippets
 @lilypondfile[verbatim,quote,texidoc,doctitle]
@@ -1186,6 +1227,9 @@ Manuel de notation :
 @ref{Mise en forme d'une citation},
 @ref{Tablatures par défaut},
 @ref{Tablatures personnalisées}.
+
+Fichiers d'initialisation :
+@file{scm/parser-clef.scm}.
 
 Morceaux choisis:
 @rlsrnamed{Pitches,Hauteurs}.
@@ -1204,8 +1248,8 @@ l'objet @code{Clef} devra être manuellement répercuté sur l'objet
 
 @lilypond[fragment,quote,relative=1]
 \new Staff \with {
-  \override ClefModifier.color = #red
   \override Clef.color = #blue
+  \override ClefModifier.color = #red
 }
 
 \clef "treble_8" c4
@@ -1318,13 +1362,14 @@ cette position sur la portée.
 \override Staff.KeySignature.sharp-positions = #'(2)
 \bar "||" \key b \major b fis b2
 @end lilypond
- 
+
 @snippets
 @lilypondfile[verbatim,quote,texidoc,doctitle]
 {preventing-natural-signs-from-being-printed-when-the-key-signature-changes.ly}
 
 @lilypondfile[verbatim,quote,texidoc,doctitle]
 {non-traditional-key-signatures.ly}
+
 
 @seealso
 Glossaire musicologique :
@@ -1384,6 +1429,10 @@ a2 b
 
 @lilypondfile[verbatim,quote,texidoc,doctitle]
 {adding-an-ottava-marking-to-a-single-voice.ly}
+
+@lilypondfile[verbatim,quote,texidoc,doctitle]
+{modifying-the-ottava-spanner-slope.ly}
+
 
 @seealso
 Glossaire musicologique :
@@ -2406,6 +2455,125 @@ musicB = {
     }
     \context Staff = "down" {
       \accidentalStyle dodecaphonic
+      \musicB
+    }
+  >>
+}
+@end lilypond
+
+
+@item dodecaphonic-no-repeat
+
+@cindex @emph{dodecaphonic}, style d'altération
+@cindex @emph{dodecaphonic}, style néomoderne
+
+@funindex dodecaphonic-no-repeat
+
+Comme dans le cas du style @code{dodecaphonic}, chaque note est par
+défaut affublée d'une altération.  Celle-ci sera toutefois omise lorsque
+la même hauteur est immédiatement répétée dans la même portée.
+
+@lilypond[quote]
+musicA = {
+  <<
+    \relative c' {
+      cis'8 fis, bes4 <a cis>8 f bis4 |
+      cis2. <c, g'>4 |
+    }
+    \\
+    \relative c' {
+      ais'2 cis, |
+      fis8 b a4 cis2 |
+    }
+  >>
+}
+
+musicB = {
+  \clef bass
+  \new Voice {
+    \voiceTwo \relative c' {
+      <fis, a cis>8[ <fis a cis>
+      \change Staff = up
+      cis' cis
+      \change Staff = down
+      <fis, a> <fis a>]
+      \showStaffSwitch
+      \change Staff = up
+      dis'4 |
+      \change Staff = down
+      <fis, a cis>4 gis <f a d>2 |
+    }
+  }
+}
+
+\new PianoStaff {
+  <<
+    \context Staff = "up" {
+      \accidentalStyle dodecaphonic-no-repeat
+      \musicA
+    }
+    \context Staff = "down" {
+      \accidentalStyle dodecaphonic-no-repeat
+      \musicB
+    }
+  >>
+}
+@end lilypond
+
+
+@item dodecaphonic-first
+
+@cindex dodecaphonic, style d'altération
+@cindex dodecaphonic, style néo-moderne
+
+@funindex dodecaphonic-first
+
+Comme dans le cas du style @code{dodecaphonic}, chaque note est par
+défaut affublée d'une altération.  Cette altération n'apparaîtra que
+pour la première occurrence dans la mesure et seront répétés en cas
+d'octave différente.
+
+@lilypond[quote]
+musicA = {
+  <<
+    \relative c' {
+      cis'8 fis, bes4 <a cis>8 f bis4 |
+      cis2. <c, g'>4 |
+    }
+    \\
+    \relative c' {
+      ais'2 cis, |
+      fis8 b a4 cis2 |
+    }
+  >>
+}
+
+musicB = {
+  \clef bass
+  \new Voice {
+    \voiceTwo \relative c' {
+      <fis, a cis>8[ <fis a cis>
+      \change Staff = up
+      cis' cis
+      \change Staff = down
+      <fis, a> <fis a>]
+      \showStaffSwitch
+      \change Staff = up
+      dis'4 |
+      \change Staff = down
+      <fis, a cis>4 gis <f a d>2 |
+    }
+  }
+}
+
+\new PianoStaff {
+  <<
+    \context Staff = "up" {
+      \accidentalStyle dodecaphonic-first
+      \musicA
+    }
+    \context Staff = "down" {
+      \accidentalStyle dodecaphonic-first
       \musicB
     }
   >>

@@ -46,14 +46,15 @@
   one coming from score at markup level)
   
  */
-class Output_def   
+class Output_def : public Smob<Output_def>
 {
-
 public:
+  int print_smob (SCM, scm_print_state *);
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Output_def ();
   VIRTUAL_COPY_CONSTRUCTOR (Output_def, Output_def);
-  DECLARE_SMOBS (Output_def);
 
-public:
   SCM scope_;
   Output_def *parent_;
   
@@ -81,7 +82,6 @@ Interval line_dimensions_int (Output_def *def, int);
 Font_metric *select_encoded_font (Output_def *layout, SCM chain);
 Font_metric *select_font (Output_def *layout, SCM chain);
 
-DECLARE_UNSMOB (Output_def, output_def);
 
 
 Font_metric* find_pango_font (Output_def *layout,  SCM descr, Real factor);

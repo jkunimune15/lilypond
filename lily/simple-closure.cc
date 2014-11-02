@@ -22,21 +22,6 @@
 
 #include "grob.hh"
 
-static scm_t_bits simple_closure_tag;
-
-bool
-is_simple_closure (SCM s)
-{
-  return (SCM_NIMP (s) && SCM_CELL_TYPE (s) == simple_closure_tag);
-}
-
-SCM
-simple_closure_expression (SCM smob)
-{
-  assert (is_simple_closure (smob));
-  return (SCM) SCM_CELL_WORD_1 (smob);
-}
-
 SCM
 evaluate_args (SCM delayed_argument, SCM args, bool pure, int start, int end)
 {
@@ -62,12 +47,12 @@ evaluate_with_simple_closure (SCM delayed_argument,
                               int start,
                               int end)
 {
-  if (is_simple_closure (expr))
+  if (Simple_closure *sc = Simple_closure::unsmob (expr))
     {
-      SCM inside = simple_closure_expression (expr);
-      SCM proc = is_unpure_pure_container (scm_car (inside))
-               ? (pure ? scm_car (inside) : unpure_pure_container_unpure_part (scm_car (inside)))
-               : scm_car (inside);
+      SCM inside = sc->expression ();
+      SCM proc = !pure && Unpure_pure_container::is_smob (scm_car (inside))
+        ? Unpure_pure_container::unsmob (scm_car (inside))->unpure_part ()
+        : scm_car (inside);
       SCM args = scm_cons (delayed_argument,
                            evaluate_args (delayed_argument, scm_cdr (inside),
                                           pure, start, end));
@@ -81,12 +66,12 @@ evaluate_with_simple_closure (SCM delayed_argument,
     return expr;
   else if (scm_car (expr) == ly_symbol2scm ("quote"))
     return scm_cadr (expr);
-  else if (is_unpure_pure_container (scm_car (expr))
+  else if (Unpure_pure_container::is_smob (scm_car (expr))
            || ly_is_procedure (scm_car (expr)))
     {
-      SCM proc = is_unpure_pure_container (scm_car (expr))
-               ? (pure ? scm_car (expr) : unpure_pure_container_unpure_part (scm_car (expr)))
-               : scm_car (expr);
+      SCM proc = !pure && Unpure_pure_container::is_smob (scm_car (expr))
+        ? Unpure_pure_container::unsmob (scm_car (expr))->unpure_part ()
+        : scm_car (expr);
       SCM args = evaluate_args (delayed_argument, scm_cdr (expr), pure, start, end);
       if (args == SCM_UNSPECIFIED)
         return SCM_UNSPECIFIED;
@@ -102,12 +87,7 @@ evaluate_with_simple_closure (SCM delayed_argument,
   return SCM_EOL;
 }
 
-LY_DEFINE (ly_simple_closure_p, "ly:simple-closure?",
-           1, 0, 0, (SCM clos),
-           "Is @var{clos} a simple closure?")
-{
-  return scm_from_bool (is_simple_closure (clos));
-}
+const char Simple_closure::type_p_name_[] = "ly:simple-closure?";
 
 LY_DEFINE (ly_make_simple_closure, "ly:make-simple-closure",
            1, 0, 0, (SCM expr),
@@ -116,10 +96,7 @@ LY_DEFINE (ly_make_simple_closure, "ly:make-simple-closure",
            " invoked as @code{(@var{func} @var{delayed-arg} @var{a1}"
            " @var{a2} @dots{})}.")
 {
-  SCM z;
-
-  SCM_NEWSMOB (z, simple_closure_tag, expr);
-  return z;
+  return Simple_closure::make_smob (expr);
 }
 
 LY_DEFINE (ly_eval_simple_closure, "ly:eval-simple-closure",
@@ -128,27 +105,19 @@ LY_DEFINE (ly_eval_simple_closure, "ly:eval-simple-closure",
            " argument.  If @var{scm-start} and @var{scm-end} are defined,"
            " evaluate it purely with those start and end points.")
 {
+  LY_ASSERT_SMOB (Simple_closure, closure, 2);
   bool pure = (scm_is_number (scm_start) && scm_is_number (scm_end));
   int start = robust_scm2int (scm_start, 0);
   int end = robust_scm2int (scm_end, 0);
-  SCM expr = simple_closure_expression (closure);
+  SCM expr = Simple_closure::unsmob (closure)->expression ();
   return evaluate_with_simple_closure (delayed, expr, pure, start, end);
 }
 
 int
-print_simple_closure (SCM s, SCM port, scm_print_state *)
+Simple_closure::print_smob (SCM port, scm_print_state *)
 {
   scm_puts ("#<simple-closure ", port);
-  scm_display (scm_cdr (s), port);
+  scm_display (expression (), port);
   scm_puts (" >", port);
   return 1;
 }
-
-void init_simple_closure ()
-{
-  simple_closure_tag = scm_make_smob_type ("simple-closure", 0);
-  scm_set_smob_mark (simple_closure_tag, scm_markcdr);
-  scm_set_smob_print (simple_closure_tag, print_simple_closure);
-};
-
-ADD_SCM_INIT_FUNC (simple_closure, init_simple_closure);

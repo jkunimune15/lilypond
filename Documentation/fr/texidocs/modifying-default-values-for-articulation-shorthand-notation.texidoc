@@ -1,8 +1,8 @@
-%% Translation of GIT committish: 4d1502a7f3c7929e30da8f35a1d177b19eb34f89
+%% Translation of GIT committish: 8eae9a75fb3ec1d0b6633103c8a652608c8fa630
   texidocfr = "
 Les raccourcis sont répertoriés dans le fichier
 @samp{ly/script-init.ly}, dans lequel on retrouve les variables
-@code{dashHat}, @code{dashPlus}, @code{dashDash}, @code{dashBang},
+@code{dashHat}, @code{dashPlus}, @code{dashDash}, @code{dashBar},
 @code{dashLarger}, @code{dashDot} et @code{dashUnderscore} ainsi que
 leur valeur par défaut.  Ces valeurs peuvent être modifiées selon vos
 besoins.  Il suffit par exemple, pour affecter au raccourci @w{@code{-+}}
@@ -12,4 +12,3 @@ besoins.  Il suffit par exemple, pour affecter au raccourci @w{@code{-+}}
 
 "
   doctitlefr = "Modification de la signification des raccourcis pour les signes d'articulation"
-

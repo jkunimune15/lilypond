@@ -117,8 +117,14 @@ enum Translator_precompute_index
 /*
   Translate music into grobs.
 */
-class Translator
+class Translator : public Smob<Translator>
 {
+public:
+  int print_smob (SCM, scm_print_state *);
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Translator ();
+private:
   void init ();
 
 public:
@@ -148,7 +154,6 @@ public:
   Global_context *get_global_context () const;
 
   TRANSLATOR_DECLARATIONS (Translator);
-  DECLARE_SMOBS (Translator);
 
 protected:                      // should be private.
   Context *daddy_context_;
@@ -172,7 +177,6 @@ void add_translator (Translator *trans);
 Translator *get_translator (SCM s);
 Moment get_event_length (Stream_event *s, Moment now);
 Moment get_event_length (Stream_event *s);
-DECLARE_UNSMOB (Translator, translator);
 
 /*
   This helper is only meaningful inside listen_* methods.

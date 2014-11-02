@@ -23,10 +23,13 @@
 #include "smobs.hh"
 #include "virtual-methods.hh"
 
-class Page_marker
+class Page_marker : public Smob<Page_marker>
 {
-  DECLARE_SMOBS (Page_marker);
-
+public:
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Page_marker ();
+private:
   SCM symbol_; /* either 'page-turn-permission or 'page-break-permission */
   SCM permission_;  /* 'force, 'allow, or '() */
   SCM label_; /* bookmarking label (a symbol) */
@@ -44,6 +47,5 @@ public:
   SCM label ();
 };
 
-DECLARE_UNSMOB (Page_marker, page_marker)
 
 #endif /* PAGE_MARKER_HH */

@@ -36,12 +36,11 @@ using namespace std;
 #include "paper-score.hh"
 #include "warn.hh"
 
-#include "ly-smobs.icc"
 
 Input *
 Score::origin () const
 {
-  return unsmob_input (input_location_);
+  return Input::unsmob (input_location_);
 }
 
 Score::Score ()
@@ -53,39 +52,28 @@ Score::Score ()
   error_found_ = false;
 
   smobify_self ();
-  input_location_ = make_input (Input ());
+  input_location_ = Input ().smobbed_copy ();
 }
 
 Score::~Score ()
 {
 }
 
-IMPLEMENT_SMOBS (Score);
-IMPLEMENT_DEFAULT_EQUAL_P (Score);
-IMPLEMENT_TYPE_P (Score, "ly:score?");
+const char Score::type_p_name_[] = "ly:score?";
 
 SCM
-Score::mark_smob (SCM s)
+Score::mark_smob ()
 {
-  Score *sc = (Score *) SCM_CELL_WORD_1 (s);
+  scm_gc_mark (header_);
+  for (vsize i = defs_.size (); i--;)
+    scm_gc_mark (defs_[i]->self_scm ());
 
-  scm_gc_mark (sc->header_);
-  for (vsize i = sc->defs_.size (); i--;)
-    scm_gc_mark (sc->defs_[i]->self_scm ());
-
-  scm_gc_mark (sc->input_location_);
-  return sc->music_;
-}
-
-int
-Score::print_smob (SCM, SCM p, scm_print_state *)
-{
-  scm_puts ("#<Score>", p);
-
-  return 1;
+  scm_gc_mark (input_location_);
+  return music_;
 }
 
 Score::Score (Score const &s)
+  : Smob<Score> ()
 {
   header_ = SCM_EOL;
   music_ = SCM_EOL;
@@ -93,9 +81,9 @@ Score::Score (Score const &s)
   error_found_ = s.error_found_;
 
   smobify_self ();
-  input_location_ = make_input (*s.origin ());
+  input_location_ = s.origin ()->smobbed_copy ();
 
-  Music *m = unsmob_music (s.music_);
+  Music *m = Music::unsmob (s.music_);
   if (m)
     {
       Music *mclone = m->clone ();
@@ -151,7 +139,7 @@ Score::book_rendering (Output_def *layoutbook,
 
       /* TODO: fix or junk --no-layout.  */
       SCM context = ly_run_translator (music_, scaled);
-      if (dynamic_cast<Global_context *> (unsmob_context (context)))
+      if (dynamic_cast<Global_context *> (Context::unsmob (context)))
         {
           SCM s = ly_format_output (context);
 
@@ -167,12 +155,12 @@ Score::book_rendering (Output_def *layoutbook,
 void
 Score::set_music (SCM music)
 {
-  if (unsmob_music (music_))
+  if (Music::is_smob (music_))
     {
-      unsmob_music (music)->origin ()->error (_ ("already have music in score"));
-      unsmob_music (music_)->origin ()->error (_ ("this is the previous music"));
+      Music::unsmob (music)->origin ()->error (_ ("already have music in score"));
+      Music::unsmob (music_)->origin ()->error (_ ("this is the previous music"));
     }
-  Music *m = unsmob_music (music);
+  Music *m = Music::unsmob (music);
   if (m && to_boolean (m->get_property ("error-found")))
     {
       m->origin ()->error (_ ("errors found, ignoring music expression"));

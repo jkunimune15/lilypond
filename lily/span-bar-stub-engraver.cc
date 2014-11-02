@@ -22,6 +22,7 @@
 #include "align-interface.hh"
 #include "context.hh"
 #include "grob.hh"
+#include "grob-properties.hh"
 #include "item.hh"
 #include "pointer-group-interface.hh"
 #include "engraver.hh"
@@ -93,7 +94,7 @@ Span_bar_stub_engraver::process_acknowledged ()
       programming_error ("At least one vertical axis group needs to be created in the first time step.");
       return;
     }
-  Grob *vertical_alignment = Grob::get_root_vertical_alignment (unsmob_grob (scm_caar (axis_groups_)));
+  Grob *vertical_alignment = Grob::get_root_vertical_alignment (Grob::unsmob (scm_caar (axis_groups_)));
   if (!vertical_alignment) // we are at the beginning of a score, so no need for stubs
     return;
 
@@ -112,8 +113,8 @@ Span_bar_stub_engraver::process_acknowledged ()
       vector<bool> keep_extent;
       for (SCM s = axis_groups_; scm_is_pair (s); s = scm_cdr (s))
         {
-          Context *c = unsmob_context (scm_cdar (s));
-          Grob *g = unsmob_grob (scm_caar (s));
+          Context *c = Context::unsmob (scm_cdar (s));
+          Grob *g = Grob::unsmob (scm_caar (s));
           if (!c || !g)
             continue;
           if (c->is_removable ())
@@ -142,7 +143,7 @@ Span_bar_stub_engraver::process_acknowledged ()
 
       for (vsize j = 0; j < affected_contexts.size (); j++)
         {
-          Item *it = new Item (updated_grob_properties (affected_contexts[j], ly_symbol2scm ("SpanBarStub")));
+          Item *it = new Item (Grob_property_info (affected_contexts[j], ly_symbol2scm ("SpanBarStub")).updated ());
           it->set_parent (spanbars_[i], X_AXIS);
           Grob_info gi = make_grob_info (it, spanbars_[i]->self_scm ());
           gi.rerouting_daddy_context_ = affected_contexts[j];
@@ -162,8 +163,8 @@ Span_bar_stub_engraver::stop_translation_timestep ()
   SCM axis_groups = SCM_EOL;
   for (SCM s = axis_groups_; scm_is_pair (s); s = scm_cdr (s))
     {
-      Context *c = unsmob_context (scm_cdar (s));
-      Grob *g = unsmob_grob (scm_caar (s));
+      Context *c = Context::unsmob (scm_cdar (s));
+      Grob *g = Grob::unsmob (scm_caar (s));
       if (!c || !g)
         continue;
       if (c->is_removable ())

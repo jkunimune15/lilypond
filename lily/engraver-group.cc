@@ -21,6 +21,7 @@
 #include "dispatcher.hh"
 #include "engraver-group.hh"
 #include "grob.hh"
+#include "grob-properties.hh"
 #include "paper-score.hh"
 #include "translator-dispatch-list.hh"
 #include "warn.hh"
@@ -29,24 +30,21 @@ IMPLEMENT_LISTENER (Engraver_group, override);
 void
 Engraver_group::override (SCM sev)
 {
-  Stream_event *ev = unsmob_stream_event (sev);
+  Stream_event *ev = Stream_event::unsmob (sev);
 
-  sloppy_general_pushpop_property (context (),
-                                   ev->get_property ("symbol"),
-                                   ev->get_property ("property-path"),
-                                   ev->get_property ("value"));
+  Grob_property_info (context (), ev->get_property ("symbol"))
+    .push (ev->get_property ("property-path"),
+           ev->get_property ("value"));
 }
 
 IMPLEMENT_LISTENER (Engraver_group, revert);
 void
 Engraver_group::revert (SCM sev)
 {
-  Stream_event *ev = unsmob_stream_event (sev);
+  Stream_event *ev = Stream_event::unsmob (sev);
 
-  sloppy_general_pushpop_property (context (),
-                                   ev->get_property ("symbol"),
-                                   ev->get_property ("property-path"),
-                                   SCM_UNDEFINED);
+  Grob_property_info (context (), ev->get_property ("symbol"))
+    .pop (ev->get_property ("property-path"));
 }
 
 void
@@ -93,13 +91,12 @@ Engraver_group::acknowledge_grobs ()
     return;
 
   SCM name_sym = ly_symbol2scm ("name");
-  SCM meta_sym = ly_symbol2scm ("meta");
 
   for (vsize j = 0; j < announce_infos_.size (); j++)
     {
       Grob_info info = announce_infos_[j];
 
-      SCM meta = info.grob ()->internal_get_property (meta_sym);
+      SCM meta = info.grob ()->get_property ("meta");
       SCM nm = scm_assoc (name_sym, meta);
       if (scm_is_pair (nm))
         nm = scm_cdr (nm);
@@ -141,7 +138,7 @@ Engraver_group::pending_grob_count () const
   for (SCM s = context_->children_contexts ();
        scm_is_pair (s); s = scm_cdr (s))
     {
-      Context *c = unsmob_context (scm_car (s));
+      Context *c = Context::unsmob (scm_car (s));
       Engraver_group *group
         = dynamic_cast<Engraver_group *> (c->implementation ());
 
@@ -162,7 +159,7 @@ Engraver_group::do_announces ()
       for (SCM s = context ()->children_contexts ();
            scm_is_pair (s); s = scm_cdr (s))
         {
-          Context *c = unsmob_context (scm_car (s));
+          Context *c = Context::unsmob (scm_car (s));
           Engraver_group *group
             = dynamic_cast<Engraver_group *> (c->implementation ());
           if (group)

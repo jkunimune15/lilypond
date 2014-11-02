@@ -37,7 +37,6 @@
 #include "warn.hh"
 #include "program-option.hh"
 
-#include "ly-smobs.icc"
 
 Lily_parser::Lily_parser (Sources *sources)
 {
@@ -55,6 +54,7 @@ Lily_parser::Lily_parser (Sources *sources)
 }
 
 Lily_parser::Lily_parser (Lily_parser const &src, SCM closures, SCM location)
+  : Smob<Lily_parser> ()
 {
   lexer_ = 0;
   sources_ = src.sources_;
@@ -77,20 +77,18 @@ Lily_parser::~Lily_parser ()
 }
 
 SCM
-Lily_parser::mark_smob (SCM s)
+Lily_parser::mark_smob ()
 {
-  Lily_parser *parser = (Lily_parser *) SCM_CELL_WORD_1 (s);
-  scm_gc_mark (parser->closures_);
-  return (parser->lexer_) ? parser->lexer_->self_scm () : SCM_EOL;
+  scm_gc_mark (closures_);
+  return (lexer_) ? lexer_->self_scm () : SCM_EOL;
 }
 
 int
-Lily_parser::print_smob (SCM s, SCM port, scm_print_state *)
+Lily_parser::print_smob (SCM port, scm_print_state *)
 {
   scm_puts ("#<Lily_parser ", port);
-  Lily_parser *parser = (Lily_parser *) SCM_CELL_WORD_1 (s);
-  if (parser->lexer_)
-    scm_display (parser->lexer_->self_scm (), port);
+  if (lexer_)
+    scm_display (lexer_->self_scm (), port);
   else
     scm_puts ("(no lexer yet)", port);
   scm_puts (" >", port);
@@ -211,9 +209,7 @@ Lily_parser::parser_error (Input const &i, const string &s)
   error_level_ = 1;
 }
 
-IMPLEMENT_SMOBS (Lily_parser);
-IMPLEMENT_TYPE_P (Lily_parser, "ly:lily-parser?");
-IMPLEMENT_DEFAULT_EQUAL_P (Lily_parser);
+const char Lily_parser::type_p_name_[] = "ly:lily-parser?";
 
 /****************************************************************
   OUTPUT-DEF
@@ -223,7 +219,7 @@ Output_def *
 get_layout (Lily_parser *parser)
 {
   SCM id = parser->lexer_->lookup_identifier ("$defaultlayout");
-  Output_def *layout = unsmob_output_def (id);
+  Output_def *layout = Output_def::unsmob (id);
   layout = layout ? layout->clone () : new Output_def;
   layout->set_variable (ly_symbol2scm ("is-layout"), SCM_BOOL_T);
 
@@ -234,7 +230,7 @@ Output_def *
 get_midi (Lily_parser *parser)
 {
   SCM id = parser->lexer_->lookup_identifier ("$defaultmidi");
-  Output_def *layout = unsmob_output_def (id);
+  Output_def *layout = Output_def::unsmob (id);
   layout = layout ? layout->clone () : new Output_def;
   layout->set_variable (ly_symbol2scm ("is-midi"), SCM_BOOL_T);
   return layout;
@@ -247,9 +243,9 @@ get_paper (Lily_parser *parser)
 {
   SCM papers = parser->lexer_->lookup_identifier ("$papers");
   Output_def *layout = ((papers == SCM_UNDEFINED) || scm_is_null (papers))
-                       ? 0 : unsmob_output_def (scm_car (papers));
+                       ? 0 : Output_def::unsmob (scm_car (papers));
   SCM default_paper = parser->lexer_->lookup_identifier ("$defaultpaper");
-  layout = layout ? layout : unsmob_output_def (default_paper);
+  layout = layout ? layout : Output_def::unsmob (default_paper);
 
   layout = layout ? dynamic_cast<Output_def *> (layout->clone ()) : new Output_def;
   layout->set_variable (ly_symbol2scm ("is-paper"), SCM_BOOL_T);

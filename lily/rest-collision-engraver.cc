@@ -57,8 +57,8 @@ Rest_collision_engraver::process_acknowledged ()
 
   for (SCM s = get_property ("busyGrobs"); scm_is_pair (s); s = scm_cdr (s))
     {
-      Grob *g = unsmob_grob (scm_cdar (s));
-      Moment *m = unsmob_moment (scm_caar (s));
+      Grob *g = Grob::unsmob (scm_cdar (s));
+      Moment *m = Moment::unsmob (scm_caar (s));
       if (!g || !m)
         continue;
 
@@ -66,10 +66,7 @@ Rest_collision_engraver::process_acknowledged ()
         {
           Grob *column = g->get_parent (X_AXIS);
           if (!column)
-            {
-              g->warning (_ ("rhythmic head is not part of a rhythmic column"));
               continue;
-            }
 
           // Only include rests that start now. Include notes that started any time.
           Paper_column *paper_column = dynamic_cast<Item *> (column)->get_column ();

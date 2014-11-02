@@ -59,7 +59,7 @@ found in @file{scm/bar-line.scm}.
    has-span-bar
    kern
    rounded
-   thin-kern
+   segno-kern
    thick-thickness))
 
 (ly:add-interface
@@ -83,7 +83,7 @@ found in @file{scm/bar-line.scm}.
  "The number describing transposition of the clef, placed below
 or above clef sign. Usually this is 8 (octave transposition)
 or 15 (two octaves), but LilyPond allows any integer here."
- '())
+ '(clef-alignments))
 
 (ly:add-interface
  'dynamic-interface
@@ -215,6 +215,11 @@ accidentals)."
  'note-name-interface
  "Note names."
  '())
+
+(ly:add-interface
+ 'number-interface
+ "Numbers."
+ '(number-type))
 
 (ly:add-interface
  'only-prebreak-interface

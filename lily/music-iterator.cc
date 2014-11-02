@@ -30,17 +30,11 @@ using namespace std;
 #include "music-wrapper-iterator.hh"
 #include "simple-music-iterator.hh"
 
-#include "ly-smobs.icc"
 
 Music_iterator::Music_iterator ()
 {
   music_ = 0;
   smobify_self ();
-}
-
-Music_iterator::Music_iterator (Music_iterator const &)
-{
-  assert (false);
 }
 
 Music_iterator::~Music_iterator ()
@@ -91,7 +85,7 @@ Music_iterator::get_static_get_iterator (Music *m)
   if (ly_is_procedure (ctor))
     {
       iter = scm_call_0 (ctor);
-      p = unsmob_iterator (iter);
+      p = Music_iterator::unsmob (iter);
     }
   else
     {
@@ -152,7 +146,7 @@ SCM
 Music_iterator::get_iterator (Music *m) const
 {
   SCM ip = get_static_get_iterator (m);
-  Music_iterator *p = unsmob_iterator (ip);
+  Music_iterator *p = Music_iterator::unsmob (ip);
 
   p->init_context (m, get_outlet ());
 
@@ -193,16 +187,12 @@ Music_iterator::get_music () const
 
 /****************************************************************/
 
-IMPLEMENT_TYPE_P (Music_iterator, "ly:iterator?");
-IMPLEMENT_SMOBS (Music_iterator);
-IMPLEMENT_DEFAULT_EQUAL_P (Music_iterator);
+const char Music_iterator::type_p_name_[] = "ly:iterator?";
 
 SCM
-Music_iterator::mark_smob (SCM smob)
+Music_iterator::mark_smob ()
 {
-  Music_iterator *mus = (Music_iterator *)SCM_CELL_WORD_1 (smob);
-
-  mus->derived_mark ();
+  derived_mark ();
   /*
     Careful with GC, although we intend the following as pointers
     only, we _must_ mark them.
@@ -210,21 +200,20 @@ Music_iterator::mark_smob (SCM smob)
   /* Use handle_ directly as get_outlet is a virtual function and we
      need to protect the context until Music_iterator::quit is being
      run. */
-  if (mus->handle_.get_context ())
-    scm_gc_mark (mus->handle_.get_context ()->self_scm ());
-  if (mus->music_)
-    scm_gc_mark (mus->music_->self_scm ());
+  if (handle_.get_context ())
+    scm_gc_mark (handle_.get_context ()->self_scm ());
+  if (music_)
+    scm_gc_mark (music_->self_scm ());
 
   return SCM_EOL;
 }
 
 int
-Music_iterator::print_smob (SCM sm, SCM port, scm_print_state *)
+Music_iterator::print_smob (SCM port, scm_print_state *)
 {
   char s[1000];
 
-  Music_iterator *iter = unsmob_iterator (sm);
-  sprintf (s, "#<%s>", iter->class_name ());
+  sprintf (s, "#<%s>", class_name ());
   scm_puts (s, port);
   return 1;
 }

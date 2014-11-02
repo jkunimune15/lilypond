@@ -31,8 +31,12 @@
   The definition of an interpretation context as given in the
   input. The lists are stored in order of definition.
 */
-struct Context_def
+struct Context_def : public Smob<Context_def>
 {
+  SCM mark_smob ();
+  int print_smob (SCM, scm_print_state *);
+  static const char type_p_name_[];
+  virtual ~Context_def ();
 private:
   /*
     these lists store the definition, in opposite order of entry
@@ -76,12 +80,9 @@ public:
   void apply_default_property_operations (Context *);
 
 private:
-  DECLARE_SMOBS (Context_def);
   Context_def ();
   Context_def (Context_def const &);
 };
 
-DECLARE_UNSMOB (Context_def, context_def);
 
 #endif /* CONTEXT_DEF_HH */
-

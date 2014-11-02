@@ -183,6 +183,10 @@ Spanner::get_bound (Direction d) const
 /*
   Set the items that this spanner spans. If D == LEFT, we also set the
   X-axis parent of THIS to S.
+
+  For example, when a slur crosses a line break, it's broken into two
+  pieces.  The second piece shouldn't be positioned relative to the
+  original NoteColumn, but rather to the PaperColumn after the break.
 */
 void
 Spanner::set_bound (Direction d, Grob *s)
@@ -200,7 +204,14 @@ Spanner::set_bound (Direction d, Grob *s)
      We check for System to prevent the column -> line_of_score
      -> column -> line_of_score -> etc situation */
   if (d == LEFT && !dynamic_cast<System *> (this))
-    set_parent (i, X_AXIS);
+    /*
+      If the X-parent is a spanner, it will be split across linebreaks, too,
+      so we shouldn't have to overwrite it with the bound. Also, we need
+      original parent for alignment.
+      This happens e.g. for MultiMeasureRestNumbers and PercentRepeatCounters.
+    */
+    if (!dynamic_cast <Spanner *> (this->get_parent (X_AXIS)))
+      set_parent (i, X_AXIS);
 
   /*
     Signal that this column needs to be kept alive. They need to be
@@ -353,7 +364,7 @@ MAKE_SCHEME_CALLBACK (Spanner, set_spacing_rods, 1);
 SCM
 Spanner::set_spacing_rods (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   SCM num_length = me->get_property ("minimum-length");
   if (scm_is_number (num_length))
     {
@@ -411,7 +422,7 @@ MAKE_SCHEME_CALLBACK (Spanner, calc_normalized_endpoints, 1);
 SCM
 Spanner::calc_normalized_endpoints (SCM smob)
 {
-  Spanner *me = unsmob_spanner (smob);
+  Spanner *me = Spanner::unsmob (smob);
   SCM result = SCM_EOL;
 
   Spanner *orig = dynamic_cast<Spanner *> (me->original ());
@@ -454,17 +465,11 @@ Spanner::calc_normalized_endpoints (SCM smob)
   return result;
 }
 
-Spanner *
-unsmob_spanner (SCM s)
-{
-  return dynamic_cast<Spanner *> (unsmob_grob (s));
-}
-
 MAKE_SCHEME_CALLBACK (Spanner, bounds_width, 1);
 SCM
 Spanner::bounds_width (SCM grob)
 {
-  Spanner *me = unsmob_spanner (grob);
+  Spanner *me = Spanner::unsmob (grob);
 
   Grob *common = me->get_bound (LEFT)->common_refpoint (me->get_bound (RIGHT), X_AXIS);
 
@@ -480,7 +485,7 @@ MAKE_SCHEME_CALLBACK (Spanner, kill_zero_spanned_time, 1);
 SCM
 Spanner::kill_zero_spanned_time (SCM grob)
 {
-  Spanner *me = unsmob_spanner (grob);
+  Spanner *me = Spanner::unsmob (grob);
   /*
     Remove the line or hairpin at the start of the line.  For
     piano voice indicators, it makes no sense to have them at

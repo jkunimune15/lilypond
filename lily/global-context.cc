@@ -46,7 +46,7 @@ Global_context::Global_context (Output_def *o)
                                  ly_symbol2scm ("Prepare"));
   events_below ()->register_as_listener (event_source_);
 
-  Context_def *globaldef = unsmob_context_def (definition_);
+  Context_def *globaldef = Context_def::unsmob (definition_);
   if (!globaldef)
     programming_error ("no `Global' context found");
   else
@@ -92,8 +92,8 @@ IMPLEMENT_LISTENER (Global_context, prepare);
 void
 Global_context::prepare (SCM sev)
 {
-  Stream_event *ev = unsmob_stream_event (sev);
-  Moment *mom = unsmob_moment (ev->get_property ("moment"));
+  Stream_event *ev = Stream_event::unsmob (sev);
+  Moment *mom = Moment::unsmob (ev->get_property ("moment"));
 
   assert (mom);
 
@@ -114,7 +114,7 @@ Context *
 Global_context::get_score_context () const
 {
   return (scm_is_pair (context_list_))
-         ? unsmob_context (scm_car (context_list_))
+         ? Context::unsmob (scm_car (context_list_))
          : 0;
 }
 
@@ -181,9 +181,7 @@ Global_context::apply_finalizations ()
   SCM lst = get_property ("finalizations");
   set_property ("finalizations", SCM_EOL);
   for (SCM s = lst; scm_is_pair (s); s = scm_cdr (s))
-
-    /* TODO: make safe.  */
-    scm_primitive_eval (scm_car (s));
+    scm_apply_0 (scm_caar (s), scm_cdar (s));
 }
 
 /* Add a function to execute before stepping to the next time step.  */
@@ -208,10 +206,4 @@ Global_context::get_default_interpreter (const string &/* context_id */)
     return get_score_context ()->get_default_interpreter ();
   else
     return Context::get_default_interpreter ();
-}
-
-Global_context *
-unsmob_global_context (SCM x)
-{
-  return dynamic_cast<Global_context *> (unsmob_context (x));
 }

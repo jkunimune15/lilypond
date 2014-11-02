@@ -69,7 +69,6 @@ using namespace std;
 #include "pitch.hh"
 #include "source-file.hh"
 #include "std-string.hh"
-#include "string-convert.hh"
 #include "version.hh"
 #include "warn.hh"
 
@@ -422,7 +421,7 @@ BOM_UTF8	\357\273\277
 		return token;
 }
 
-<INITIAL,notes,lyrics>{ 
+<INITIAL,notes,lyrics,chords>{
 	\<\<	{
                 yylval = SCM_UNSPECIFIED;
 		return DOUBLE_ANGLE_OPEN;
@@ -433,7 +432,7 @@ BOM_UTF8	\357\273\277
 	}
 }
 
-<INITIAL,notes>{
+<INITIAL,notes,chords>{
 	\<	{
                 yylval = SCM_UNSPECIFIED;
 		return ANGLE_OPEN;
@@ -815,7 +814,7 @@ BOM_UTF8	\357\273\277
 void
 Lily_lexer::push_extra_token (Input const &where, int token_type, SCM scm)
 {
-	extra_tokens_ = scm_cons (scm_cons2 (make_input (where),
+	extra_tokens_ = scm_cons (scm_cons2 (where.smobbed_copy (),
 					     scm_from_int (token_type),
 					     scm), extra_tokens_);
 }
@@ -827,7 +826,7 @@ Lily_lexer::pop_extra_token ()
 		return -1;
 
   /* produce requested token */
-	yylloc = *unsmob_input (scm_caar (extra_tokens_));
+	yylloc = *Input::unsmob (scm_caar (extra_tokens_));
 	int type = scm_to_int (scm_cadar (extra_tokens_));
 	yylval = scm_cddar (extra_tokens_);
 	extra_tokens_ = scm_cdr (extra_tokens_);
@@ -914,7 +913,7 @@ Lily_lexer::scan_escaped_word (const string &str)
 		return i;
 
 	SCM sid = lookup_identifier (str);
-	if (Music *m = unsmob_music (sid))
+	if (Music *m = Music::unsmob (sid))
 	{
 		m->set_spot (override_input (here_input ()));
 	}
@@ -934,7 +933,7 @@ int
 Lily_lexer::scan_shorthand (const string &str)
 {
 	SCM sid = lookup_identifier (str);
-	if (Music *m = unsmob_music (sid))
+	if (Music *m = Music::unsmob (sid))
 	{
 		m->set_spot (override_input (here_input ()));
 	}
@@ -953,13 +952,13 @@ Lily_lexer::scan_shorthand (const string &str)
 int
 Lily_lexer::scan_scm_id (SCM sid)
 {
-	if (is_music_function (sid))
+	if (Music_function *fun = Music_function::unsmob (sid))
 	{
 		int funtype = SCM_FUNCTION;
 
 		yylval = sid;
 
-		SCM s = get_music_function_signature (sid);
+		SCM s = fun->get_signature ();
 		SCM cs = scm_car (s);
 
 		if (scm_is_pair (cs))
@@ -1014,7 +1013,7 @@ Lily_lexer::scan_bare_word (const string &str)
 		
 		if (scm_is_pair (handle)) {
 			yylval = scm_cdr (handle);
-			if (unsmob_pitch (yylval))
+			if (Pitch::is_smob (yylval))
 	                    return (YYSTATE == notes) ? NOTENAME_PITCH : TONICNAME_PITCH;
 			else if (scm_is_symbol (yylval))
 			    return DRUM_PITCH;
@@ -1096,9 +1095,9 @@ Lily_lexer::eval_scm (SCM readerdata, Input hi, char extra_token)
 			     p = scm_cdr (p))
 			{
 				SCM v = scm_car (p);
-				if (Music *m = unsmob_music (v))
+				if (Music *m = Music::unsmob (v))
 				{
-					if (!unsmob_input (m->get_property ("origin")))
+					if (!Input::is_smob (m->get_property ("origin")))
 						m->set_spot (override_input (here_input ()));
 				}
 					
@@ -1121,9 +1120,9 @@ Lily_lexer::eval_scm (SCM readerdata, Input hi, char extra_token)
 			sval = SCM_UNSPECIFIED;
 	}
 
-	if (Music *m = unsmob_music (sval))
+	if (Music *m = Music::unsmob (sval))
 	{
-		if (!unsmob_input (m->get_property ("origin")))
+		if (!Input::is_smob (m->get_property ("origin")))
 			m->set_spot (override_input (here_input ()));
 	}
 
@@ -1275,7 +1274,12 @@ is_valid_version (string s)
 {
   Lilypond_version current ( MAJOR_VERSION "." MINOR_VERSION "." PATCH_LEVEL );
   Lilypond_version ver (s);
-  if (int (ver) < oldest_version)
+  if (!ver)
+  {
+	  non_fatal_error (_f ("Invalid version string \"%s\"", s));
+	  return false;
+  }
+  if (ver < oldest_version)
 	{	
 		non_fatal_error (_f ("file too old: %s (oldest supported: %s)", ver.to_string (), oldest_version.to_string ()));
 		non_fatal_error (_ ("consider updating the input with the convert-ly script"));
@@ -1316,9 +1320,8 @@ scan_fraction (string frac)
 	string left = frac.substr (0, i);
 	string right = frac.substr (i + 1, (frac.length () - i + 1));
 
-	int n = String_convert::dec2int (left);
-	int d = String_convert::dec2int (right);
-	return scm_cons (scm_from_int (n), scm_from_int (d));
+	return scm_cons (scm_c_read_string (left.c_str ()),
+			 scm_c_read_string (right.c_str ()));
 }
 
 SCM

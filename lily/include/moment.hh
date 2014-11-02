@@ -27,10 +27,12 @@
    Musical timing (Main-timing, grace-timing) with glue for
    Guilification;
 */
-class Moment
+class Moment : public Simple_smob<Moment>
 {
-  DECLARE_SIMPLE_SMOBS (Moment);
 public:
+  static SCM equal_p (SCM, SCM);
+  int print_smob (SCM, scm_print_state *);
+  static const char type_p_name_[];
   Moment ();
   Moment (int m);
 
@@ -68,7 +70,6 @@ IMPLEMENT_ARITHMETIC_OPERATOR (Moment, / );
 IMPLEMENT_ARITHMETIC_OPERATOR (Moment, *);
 IMPLEMENT_ARITHMETIC_OPERATOR (Moment, % );
 
-DECLARE_UNSMOB (Moment, moment);
 int compare (Moment const &, Moment const &);
 INSTANTIATE_COMPARE (Moment const &, Moment::compare);
 
@@ -81,4 +82,3 @@ ostream &operator << (ostream &, Moment const &);
 bool moment_less (SCM a, SCM b);
 
 #endif /* MOMENT_HH */
-

@@ -42,7 +42,7 @@ way the transposition number is displayed."
 ;; prepare using other fonts than 'fetaMusic.
 ;; Currently it ensures that the default-fonts are used by the
 ;; markup-command 'note-by-number' in 'metronome-markup' (see below).
-(define*-public
+(define*
   ((styled-metronome-markup #:optional (glyph-font 'default))
                             event context)
    (let ((hide-note (ly:context-property context 'tempoHideNote #f))
@@ -51,6 +51,7 @@ way the transposition number is displayed."
          (count (ly:event-property event 'metronome-count)))
 
    (metronome-markup glyph-font text dur count hide-note)))
+(export styled-metronome-markup)
 
 (define-public format-metronome-markup
   (styled-metronome-markup))
@@ -634,16 +635,19 @@ only ~a fret labels provided")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; bar numbers
 
-(define-public ((every-nth-bar-number-visible n) barnum mp)
+(define ((every-nth-bar-number-visible n) barnum mp)
   (= 0 (modulo barnum n)))
+(export every-nth-bar-number-visible)
 
-(define-public ((modulo-bar-number-visible n m) barnum mp)
+(define ((modulo-bar-number-visible n m) barnum mp)
   (and (> barnum 1) (= m (modulo barnum n))))
+(export modulo-bar-number-visible)
 
-(define-public ((set-bar-number-visibility n) tr)
+(define ((set-bar-number-visibility n) tr)
   (let ((bn (ly:context-property tr 'currentBarNumber)))
     (ly:context-set-property! tr 'barNumberVisibility
                               (modulo-bar-number-visible n (modulo bn n)))))
+(export set-bar-number-visibility)
 
 (define-public (first-bar-number-invisible barnum mp)
   (> barnum 1))
@@ -688,43 +692,8 @@ only ~a fret labels provided")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; percent repeat counters
 
-(define-public ((every-nth-repeat-count-visible n) count context)
+(define ((every-nth-repeat-count-visible n) count context)
   (= 0 (modulo count n)))
+(export every-nth-repeat-count-visible)
 
 (define-public (all-repeat-counts-visible count context) #t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; make-engraver helper macro
-
-(defmacro-public make-engraver forms
-  "Helper macro for creating Scheme engravers.
-
-The usual form for an engraver is an association list (or alist)
-mapping symbols to either anonymous functions or to another such
-alist.
-
-@code{make-engraver} accepts forms where the first element is either
-an argument list starting with the respective symbol, followed by the
-function body (comparable to the way @code{define} is used for
-defining functions), or a single symbol followed by subordinate forms
-in the same manner.  You can also just make an alist pair
-literally (the @samp{car} is quoted automatically) as long as the
-unevaluated @samp{cdr} is not a pair.  This is useful if you already
-have defined your engraver functions separately.
-
-Symbols mapping to a function would be @code{initialize},
-@code{start-translation-timestep}, @code{process-music},
-@code{process-acknowledged}, @code{stop-translation-timestep}, and
-@code{finalize}.  Symbols mapping to another alist specified in the
-same manner are @code{listeners} with the subordinate symbols being
-event classes, and @code{acknowledgers} and @code{end-acknowledgers}
-with the subordinate symbols being interfaces."
-  (let loop ((forms forms))
-    (if (cheap-list? forms)
-        `(list
-          ,@(map (lambda (form)
-                   (if (pair? (car form))
-                       `(cons ',(caar form) (lambda ,(cdar form) ,@(cdr form)))
-                       `(cons ',(car form) ,(loop (cdr form)))))
-                 forms))
-        forms)))

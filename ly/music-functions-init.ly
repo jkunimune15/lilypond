@@ -286,7 +286,7 @@ as @code{\\compoundMeter #'((3 2 8))} or shorter
          (timesig (cons (ly:moment-main-numerator mlen)
                         (ly:moment-main-denominator mlen))))
   #{
-    \once \override Staff.TimeSignature.stencil = #(lambda (grob)
+    \once \override Timing.TimeSignature.stencil = #(lambda (grob)
       (grob-interpret-markup grob (format-compound-time args)))
     \set Timing.timeSignatureFraction = #timesig
     \set Timing.baseMoment = #beat
@@ -467,8 +467,8 @@ grobdescriptions =
 in the format of @code{all-grob-descriptions}.")
    (ly:make-context-mod
     (map (lambda (p)
-	   (list 'assign (car p) (list (cdr p))))
-	 descriptions)))
+	   (list 'assign (car p) (ly:make-grob-properties (cdr p))))
+         descriptions)))
 
 harmonicByFret = #(define-music-function (parser location fret music) (number? ly:music?)
   (_i "Convert @var{music} into mixed harmonics; the resulting notes resemble
@@ -554,21 +554,18 @@ instrumentSwitch =
 
 
 keepWithTag =
-#(define-music-function (parser location tag music)
+#(define-music-function (parser location tags music)
    (symbol-list-or-symbol? ly:music?)
-   (_i "Include only elements of @var{music} that are either untagged
-or tagged with one of the tags in @var{tag}.  @var{tag} may be either
-a single symbol or a list of symbols.")
+   (_i "Include only elements of @var{music} that are tagged with one
+of the tags in @var{tags}.  @var{tags} may be either a single symbol
+or a list of symbols.
+
+Each tag may be declared as a member of at most one tag group (defined
+with @code{\\tagGroup}).  If none of a @var{music} element's tags
+share a tag group with one of the specified @var{tags}, the element is
+retained.")
    (music-filter
-    (if (symbol? tag)
-        (lambda (m)
-          (let ((music-tags (ly:music-property m 'tags)))
-            (or (null? music-tags)
-                (memq tag music-tags))))
-        (lambda (m)
-          (let ((music-tags (ly:music-property m 'tags)))
-            (or (null? music-tags)
-                (any (lambda (t) (memq t music-tags)) tag)))))
+    (tags-keep-predicate tags)
     music))
 
 key =
@@ -631,6 +628,138 @@ languageRestore =
         (ly:parser-set-note-names parser pitchnames))
       (ly:input-warning location (_ "No other language was defined previously. Ignoring."))))
 
+
+magnifyMusic =
+#(define-music-function (parser location mag music) (positive? ly:music?)
+   (_i "Magnify the notation of @var{music} without changing the
+staff-size, using @var{mag} as a size factor.  Stems, beams,
+slurs, ties, and horizontal spacing are adjusted automatically.")
+
+   ;; these props are NOT allowed to shrink below default size
+   (define unshrinkable-props
+     '(
+       ;; stems
+       (Stem thickness)
+
+       ;; slurs
+       (Slur line-thickness)
+       (Slur thickness)
+       (PhrasingSlur line-thickness)
+       (PhrasingSlur thickness)
+
+       ;; ties
+       (Tie line-thickness)
+       (Tie thickness)
+       (LaissezVibrerTie line-thickness)
+       (LaissezVibrerTie thickness)
+       (RepeatTie line-thickness)
+       (RepeatTie thickness)
+       ))
+
+   ;; these props ARE allowed to shrink below default size
+   (define shrinkable-props
+     (let ((baseline-skip-props
+             (find-named-props 'baseline-skip all-grob-descriptions))
+           (word-space-props
+             (find-named-props 'word-space all-grob-descriptions)))
+       (append
+         baseline-skip-props
+         word-space-props
+         '(
+           ;; TODO: uncomment spacing-increment here once Issue 3987 is fixed
+           ;; override at the 'Score level
+           ;(SpacingSpanner spacing-increment)
+
+           ;; lengths and heights
+           (Beam length-fraction)
+           (Stem length-fraction)
+           (Stem beamlet-default-length)
+           (Stem double-stem-separation)
+           (Slur height-limit)
+           (Slur minimum-length)
+           (PhrasingSlur height-limit)
+           (PhrasingSlur minimum-length)
+
+           ;; Beam.beam-thickness is dealt with separately below
+           ))))
+   #{
+     \context Bottom {
+       %% TODO: uncomment \newSpacingSection once Issue 3990 is fixed
+       %\newSpacingSection
+       #(scale-fontSize 'magnifyMusic mag)
+       #(scale-props    'magnifyMusic mag #f unshrinkable-props)
+       #(scale-props    'magnifyMusic mag #t shrinkable-props)
+       #(scale-beam-thickness mag)
+
+       #music
+
+       %% TODO: uncomment \newSpacingSection once Issue 3990 is fixed
+       %\newSpacingSection
+       %% reverse engineer the former fontSize value instead of using \unset
+       #(revert-fontSize 'magnifyMusic mag)
+       #(revert-props    'magnifyMusic mag (append unshrinkable-props
+                                                   shrinkable-props
+                                                   '((Beam beam-thickness))))
+     }
+   #})
+
+magnifyStaff =
+#(define-music-function (parser location mag) (positive?)
+   (_i "Change the size of the staff, adjusting notation size and
+horizontal spacing automatically, using @var{mag} as a size factor.")
+
+   ;; these props are NOT allowed to shrink below default size
+   (define unshrinkable-props
+     '((StaffSymbol thickness)))
+
+   ;; these props ARE allowed to shrink below default size
+   (define shrinkable-props
+     (let* ((baseline-skip-props
+              (find-named-props 'baseline-skip all-grob-descriptions))
+            (word-space-props
+              (find-named-props 'word-space all-grob-descriptions))
+            (space-alist-props
+              (find-named-props 'space-alist all-grob-descriptions)))
+       (append
+         baseline-skip-props
+         word-space-props
+         space-alist-props
+         '(
+           ;; override at the 'Score level
+           (SpacingSpanner spacing-increment)
+
+           (StaffSymbol staff-space)
+           (BarLine kern)
+           (BarLine segno-kern)
+           (BarLine hair-thickness)
+           (BarLine thick-thickness)
+           (Stem beamlet-default-length)
+           (Stem double-stem-separation)
+           ))))
+
+   #{
+     \stopStaff
+
+     %% revert settings from last time
+     %% (but only if \magnifyStaff has already been used
+     %% and the staff magnification is changing)
+     #(revert-fontSize 'magnifyStaff mag)
+     #(revert-props    'magnifyStaff mag (append unshrinkable-props
+                                                 shrinkable-props))
+
+     %% scale settings
+     %% (but only if staff magnification is changing
+     %% and does not equal 1)
+     #(scale-fontSize 'magnifyStaff mag)
+     #(scale-props    'magnifyStaff mag #f unshrinkable-props)
+     #(scale-props    'magnifyStaff mag #t shrinkable-props)
+
+     %% this might cause problems until Issue 3990 is fixed
+     \newSpacingSection
+
+     \startStaff
+     \set Staff.magnifyStaffValue = #mag
+   #})
 
 makeClusters =
 #(define-music-function (parser location arg) (ly:music?)
@@ -754,7 +883,7 @@ appropriate tweak applied.")
               \override #prop-path = #(offsetter (third prop-path) offsets)
             #}
             (make-music 'Music)))))
- 
+
 omit =
 #(define-music-function (parser location item) (symbol-list-or-music?)
    (_i "Set @var{item}'s @samp{stencil} property to @code{#f},
@@ -887,100 +1016,101 @@ Example:
   C = { e e | f f | }
 @end verbatim
 ")
+   (define voice-count (length voice-ids))
    (define (bar-check? m)
      "Checks whether m is a bar check."
      (eq? (ly:music-property m 'name) 'BarCheck))
+   (define (recurse-and-split-list lst)
+     "Return either a list of music lists split along barchecks, or @code{#f}."
+     (if (any bar-check? lst)
+         (let* ((voices (apply circular-list (make-list voice-count '())))
+                (current-voices voices)
+                (current-sequence '()))
+           ;;
+           ;; utilities
+           (define (push-music m)
+             "Push the music expression into the current sequence"
+             (set! current-sequence (cons m current-sequence)))
+           (define (change-voice)
+             "Store the previously built sequence into the current voice and
+change to the following voice."
+             (set-car! current-voices
+                       (cons (reverse! current-sequence)
+                             (car current-voices)))
+             (set! current-sequence '())
+             (set! current-voices (cdr current-voices)))
+           (for-each (lambda (m)
+                       (let ((split? (recurse-and-split m)))
+                         (if split?
+                             (for-each
+                              (lambda (m)
+                                (push-music m)
+                                (change-voice))
+                              split?)
+                             (begin
+                               (push-music m)
+                               (if (bar-check? m) (change-voice))))))
+                     lst)
+           (if (pair? current-sequence) (change-voice))
+           ;; un-circularize `voices' and reorder the voices
+           (set! voices (map reverse!
+                             (list-head voices voice-count)))
+           ;; check sequence length
+           (apply for-each (lambda seqs
+                             (define (seq-len seq)
+                               (reduce ly:moment-add
+                                       (ly:make-moment 0)
+                                       (map ly:music-length seq)))
+                             (let ((moment-reference (seq-len (car seqs))))
+                               (for-each (lambda (seq)
+                                           (if (not (equal? (seq-len seq)
+                                                            moment-reference))
+                                               (ly:music-warning
+                                                (if (pair? seq)
+                                                    (last seq)
+                                                    (caar seqs))
+                                                (_ "Bars in parallel music don't have the same length"))))
+                                         seqs)))
+                  voices)
+           (map concatenate! voices))
+         (let ((deeper (map recurse-and-split lst)))
+           (and (any pair? deeper)
+                (apply zip (map
+                            (lambda (m split)
+                              (or split
+                                  (ly:music-deep-copy (make-list voice-count m))))
+                            lst deeper))))))
    (define (recurse-and-split music)
      "This returns either a list of music split along barchecks, or
 @code{#f}."
-     (let ((elt (ly:music-property music 'element))
-           (elts (ly:music-property music 'elements)))
-       (cond ((ly:music? elt)
-              (let ((lst (recurse-and-split elt)))
-                (and lst
-                     (map
-                      (lambda (x)
-                        (let ((res (music-clone music 'element x)))
-                          (if (ly:input-location?
-                               (ly:music-property x 'origin))
-                              (set! (ly:music-property res 'origin)
-                                    (ly:music-property x 'origin)))
-                          res))
-                      lst))))
-             ((any bar-check? elts)
-              (let* ((voices (apply circular-list
-                                    (make-list (length voice-ids)
-                                               '())))
-                     (current-voices voices)
-                     (current-sequence '()))
-                ;;
-                ;; utilities
-                (define (push-music m)
-                  "Push the music expression into the current sequence"
-                  (set! current-sequence (cons m current-sequence)))
-                (define (change-voice)
-                  "Stores the previously built sequence into the current voice and
-       change to the following voice."
-                  (set-car! current-voices
-                            (cons (reverse! current-sequence)
-                                  (car current-voices)))
-                  (set! current-sequence '())
-                  (set! current-voices (cdr current-voices)))
-                (for-each (lambda (m)
-                            (let ((split? (recurse-and-split m)))
-                              (if split?
-                                  (for-each
-                                   (lambda (m)
-                                     (push-music m)
-                                     (change-voice))
-                                   split?)
-                                  (begin
-                                    (push-music m)
-                                    (if (bar-check? m) (change-voice))))))
-                          elts)
-                (if (pair? current-sequence) (change-voice))
-                ;; un-circularize `voices' and reorder the voices
-
-                (set! voices (map reverse!
-                                  (list-head voices (length voice-ids))))
-
-                ;; check sequence length
-                (apply for-each (lambda seqs
-                                  (define (seq-len seq)
-                                    (reduce ly:moment-add
-                                            (ly:make-moment 0)
-                                            (map ly:music-length seq)))
-                                  (let ((moment-reference (seq-len (car seqs))))
-                                    (for-each (lambda (seq)
-                                                (if (not (equal? (seq-len seq)
-                                                                 moment-reference))
-                                                    (ly:music-warning
-                                                     (if (pair? seq)
-                                                         (last seq)
-                                                         (caar seqs))
-                                                     (_ "Bars in parallel music don't have the same length"))))
-                                              seqs)))
-                       voices)
-                (map
-                 (lambda (lst)
-                   (set! lst (concatenate! lst))
-                   (let ((res (music-clone music 'elements lst)))
-                     (if (and (pair? lst)
-                              (ly:input-location? (ly:music-property
-                                                   (car lst)
-                                                   'origin)))
-                         (set! (ly:music-property res 'origin)
-                               (ly:music-property (car lst) 'origin)))
-                     res))
-                 voices)))
-             (else #f))))
+     (let* ((elt (ly:music-property music 'element))
+            (elts (ly:music-property music 'elements))
+            (split-elt (and (ly:music? elt) (recurse-and-split elt)))
+            (split-elts (and (pair? elts) (recurse-and-split-list elts))))
+       (and (or split-elt split-elts)
+            (map
+             (lambda (e es)
+               (apply music-clone music
+                      (append
+                       ;; reassigning the origin of the parent only
+                       ;; makes sense if the first expression in the
+                       ;; result is from a distributed origin
+                       (let ((origin
+                              (if (ly:music? elt)
+                                  (and (ly:music? e) (ly:music-property e 'origin #f))
+                                  (and (pair? es) (ly:music-property (car es) 'origin #f)))))
+                         (if origin (list 'origin origin) '()))
+                       (if (ly:music? e) (list 'element e) '())
+                       (if (pair? es) (list 'elements es) '()))))
+             (or split-elt (circular-list #f))
+             (or split-elts (circular-list #f))))))
    (let ((voices (recurse-and-split music)))
      (if voices
          ;;
          ;; bind voice identifiers to the voices
          (for-each (lambda (voice-id voice)
                      (ly:parser-define! parser voice-id voice))
-	  voice-ids voices)
+                   voice-ids voices)
          (ly:music-warning music
                            (_ "ignoring parallel music without barchecks")))))
 
@@ -1128,19 +1258,13 @@ omitted, the first note in @var{music} is given in absolute pitch.")
 	       'element music))
 
 removeWithTag =
-#(define-music-function (parser location tag music)
+#(define-music-function (parser location tags music)
    (symbol-list-or-symbol? ly:music?)
    (_i "Remove elements of @var{music} that are tagged with one of the
-tags in @var{tag}.  @var{tag} may be either a single symbol or a list
+tags in @var{tags}.  @var{tags} may be either a single symbol or a list
 of symbols.")
    (music-filter
-    (if (symbol? tag)
-        (lambda (m)
-          (not (memq tag (ly:music-property m 'tags))))
-        (lambda (m)
-          (let ((music-tags (ly:music-property m 'tags)))
-            (or (null? music-tags)
-                (not (any (lambda (t) (memq t music-tags)) tag))))))
+    (tags-remove-predicate tags)
     music))
 
 resetRelativeOctave =
@@ -1336,17 +1460,24 @@ styledNoteHeads =
    (style-note-heads heads style music))
 
 tag =
-#(define-music-function (parser location tag music) (symbol-list-or-symbol? ly:music?)
-   (_i "Tag the following @var{music} with @var{tag} and return the
-result, by adding the single symbol or symbol list @var{tag} to the
+#(define-music-function (parser location tags music) (symbol-list-or-symbol? ly:music?)
+   (_i "Tag the following @var{music} with @var{tags} and return the
+result, by adding the single symbol or symbol list @var{tags} to the
 @code{tags} property of @var{music}.")
 
    (set!
     (ly:music-property music 'tags)
-    ((if (symbol? tag) cons append)
-     tag
+    ((if (symbol? tags) cons append)
+     tags
      (ly:music-property music 'tags)))
    music)
+
+tagGroup =
+#(define-void-function (parser location tags) (symbol-list?)
+   (_i "Define a tag group comprising the symbols in the symbol list
+@var{tags}.  Tag groups must not overlap.")
+   (let ((err (define-tag-group tags)))
+     (if err (ly:parser-error parser err location))))
 
 temporary =
 #(define-music-function (parser location music)

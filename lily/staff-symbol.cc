@@ -33,7 +33,7 @@ MAKE_SCHEME_CALLBACK (Staff_symbol, print, 1);
 SCM
 Staff_symbol::print (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   Spanner *sp = dynamic_cast<Spanner *> (me);
   Grob *common
     = sp->get_bound (LEFT)->common_refpoint (sp->get_bound (RIGHT), X_AXIS);
@@ -65,11 +65,19 @@ Staff_symbol::print (SCM smob)
       else
         {
           Item *x = sp->get_bound (d);
-
-          span_points[d] = ((!x->break_status_dir ()
-                             && !x->extent (x, X_AXIS).is_empty ())
-                            ? Paper_column::break_align_width (x, ly_symbol2scm ("break-alignment"))[d]
-                            : x->relative_coordinate (common, X_AXIS));
+          if (x->extent (x, X_AXIS).is_empty ()
+              || (x->break_status_dir () && sp->broken_neighbor (d)))
+            span_points[d] = x->relative_coordinate (common, X_AXIS);
+          // What the default implementation of to-barline does for
+          // spanners is not really in usefully recognizable shape by
+          // now, so we just reimplement.
+          else
+            {
+              SCM where = (d == RIGHT
+                           ? me->get_property ("break-align-symbols")
+                           : ly_symbol2scm ("break-alignment"));
+              span_points[d] = Paper_column::break_align_width (x, where)[d];
+            }
         }
 
       span_points[d] -= d * t / 2;
@@ -279,7 +287,7 @@ MAKE_SCHEME_CALLBACK (Staff_symbol, height, 1);
 SCM
 Staff_symbol::height (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   Real t = me->layout ()->get_dimension (ly_symbol2scm ("line-thickness"));
   t *= robust_scm2double (me->get_property ("thickness"), 1.0);
 
@@ -372,6 +380,7 @@ ADD_INTERFACE (Staff_symbol,
                " @code{width} property.",
 
                /* properties */
+               "break-align-symbols "
                "ledger-extra "
                "ledger-line-thickness "
                "ledger-positions "

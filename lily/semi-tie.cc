@@ -27,7 +27,19 @@
 #include "staff-symbol-referencer.hh"
 
 ADD_INTERFACE (Semi_tie,
-               "A tie which is only on one side connected to a note head.",
+               "A tie which is only connected to a note head on one side."
+               "\n"
+               "The following properties may be set in the @code{details}"
+               " list:\n"
+               "\n"
+               "@table @code\n"
+               "@item height-limit\n"
+               "Maximum tie height: The longer the tie, the closer it is"
+               " to this height.\n"
+               "@item ratio\n"
+               "Parameter for tie shape.  The higher this number, the"
+               " quicker the tie attains its @code{height-limit}.\n"
+               "@end table\n",
 
                /* properties */
                "control-points "
@@ -42,7 +54,7 @@ MAKE_SCHEME_CALLBACK (Semi_tie, calc_control_points, 1)
 SCM
 Semi_tie::calc_control_points (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   (void) me->get_property ("direction");
 
   if (Semi_tie_column::has_interface (me->get_parent (Y_AXIS)))
@@ -61,7 +73,7 @@ Semi_tie::calc_control_points (SCM smob)
 int
 Semi_tie::get_position (Grob *me)
 {
-  Grob *h = unsmob_grob (me->get_object ("note-head"));
+  Grob *h = Grob::unsmob (me->get_object ("note-head"));
   return (int) rint (Staff_symbol_referencer::get_position (h));
 }
 

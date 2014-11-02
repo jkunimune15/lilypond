@@ -1,7 +1,7 @@
 @c -*- coding: utf-8; mode: texinfo; documentlanguage: fr -*-
 
 @ignore
-    Translation of GIT committish: d46572826e777ed3e9fa4656535a6e9000f2ed9e
+    Translation of GIT committish: fab824ac128346465690246f7a42ce1e8b42db8d
 
     When revising a translation, copy the HEAD committish of the
     version that you are working on.  For details, see the Contributors'
@@ -135,6 +135,21 @@ g-0\3
 <g-0\3>
 @end lilypond
 
+Les numéros de corde peuvent aussi, comme traditionnellement pour les
+cordes non frettées, s'imprimer en chiffres romains placés sous la
+portée plutôt qu'en surplomb.
+
+@lilypond[verbatim,quote,relative=2]
+c2\2
+a\3
+\romanStringNumbers
+c\2
+\set stringNumberOrientations = #'(down)
+a\3
+\arabicStringNumbers
+g1\4
+@end lilypond
+
 @snippets
 
 @lilypondfile[verbatim,quote,texidoc,doctitle]
@@ -142,6 +157,11 @@ g-0\3
 
 @lilypondfile[verbatim,quote,texidoc,doctitle]
 {allowing-fingerings-to-be-printed-inside-the-staff.ly}
+
+@predefined
+@code{\arabicStringNumbers},
+@code{\romanStringNumbers}.
+@endpredefined
 
 @seealso
 Manuel de notation :
@@ -276,6 +296,7 @@ l'activation de @code{restrainOpenStrings}.
 
 @cindex accord, répétition
 @cindex répétition, utilisation de @code{q}
+@cindex @code{q}, répétition d'accord
 
 La répétition d'une construction en accord s'indique par un @code{q} --
 voir @ref{Répétition d'accords}.  Cette fonctionnalité, bien
@@ -479,7 +500,7 @@ ratioHarmonics = {
 
 @lilypondfile[verbatim,quote,texidoc,doctitle]
 {chord-glissando-in-tablature.ly}
- 
+
 @cindex hammer on
 @cindex pull off
 
@@ -1016,12 +1037,16 @@ dans le diagramme d'accord.  L'indication de capodastre est une petite
 ligne transversale aux cordes.  La case avec le capodastre est la case
 la plus basse du diagramme d'accord.
 
+Les points d'indication de doigté peuvent se colorier ou être mis
+entre parenthèses ; la couleur des parenthèses est indépendante de
+celle du point.
+
 @c \override is necessary to make fingering visible
 @lilypond[quote, verbatim]
 <<
     \new ChordNames {
       \chordmode {
-        f1 g c
+        f1 g c c
       }
     }
   \new Staff {
@@ -1055,6 +1080,17 @@ la plus basse du diagramme d'accord.
         (place-fret 4 5 1)
         (place-fret 3 5 2)
         (place-fret 2 5 3)
+      )
+    }
+    \override Voice.TextScript.size = 1.5
+    <c g c' e' g'>1^\markup {
+      \fret-diagram-verbose #'(
+        (place-fret 6 3 1 red parenthesized default-paren-color)
+        (place-fret 5 3 1 inverted)
+        (place-fret 4 5 2 blue parenthesized)
+        (place-fret 3 5 3 blue)
+        (place-fret 2 5 4 blue)
+        (place-fret 1 3 1 inverted)
       )
     }
   }

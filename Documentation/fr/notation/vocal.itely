@@ -1,7 +1,7 @@
 @c -*- coding: utf-8; mode: texinfo; documentlanguage: fr -*-
 
 @ignore
-    Translation of GIT committish: d46572826e777ed3e9fa4656535a6e9000f2ed9e
+    Translation of GIT committish: b58a17a6b0b6f624cee7858a74092265e0791fe2
 
     When revising a translation, copy the HEAD committish of the
     version that you are working on.  For details, see the Contributors'
@@ -318,12 +318,6 @@ déduire les durées à partir d'un contexte musical ; la rubrique
 technique permet aussi d'ajouter des dialogues, comme indiqué à la rubrique
 @ref{Dialogue et musique}.
 
-Des paroles saisies de cette manière s'aligneront par défaut sur la
-gauche des notes ; elles seront centrées sur les notes de la
-mélodie dès lors que vous pourrez les associer à une voix.  Tout ceci
-est abordé plus en détails à la rubrique
-@ref{Durée explicite des syllabes}.
-
 @end itemize
 
 @seealso
@@ -425,7 +419,7 @@ d'écrire de la musique vocale dans une structure Lilypond plus complexe.
 @end example
 
 @noindent
-revient au même que  
+revient au même que
 
 @example
 \new Voice = "blah" @{ MUSIQUE @}
@@ -517,9 +511,8 @@ syllabes sont entrées comme des notes -- du texte remplaçant les
 hauteurs -- ce qui veut dire que vous devez définir leur durée
 explicitement.
 
-Par défaut, les syllabes seront alignées par la gauche sur l'instant
-musical.  Les traits d'union seront imprimés entre les syllabes, à
-l'inverse des mélismes puisqu'il n'y a pas de voix associée.
+Les traits d'union seront imprimés entre les syllabes, à l'inverse des
+mélismes puisqu'il n'y a pas de voix associée.
 
 Voici deux illustrations de cette technique :
 
@@ -527,10 +520,10 @@ Voici deux illustrations de cette technique :
 <<
   \new Voice = "melody" {
     \time 3/4
-    c2 e4 g2 f
+    c'2 a f f e e
   }
   \new Lyrics \lyricmode {
-    play1 the4 game4
+    c4. -- a -- f -- f -- e2. -- e
   }
 >>
 @end lilypond
@@ -560,27 +553,21 @@ Voici deux illustrations de cette technique :
 Cette manière de procéder est tout à fait adaptée lorsqu'un fond musical
 accompagne des dialogues -- voir @ref{Dialogue et musique}.
 
-Les syllabes seront centrées par rapport à l'instant musical dès lors
-que vous aurez attribué à la propriété @code{associatedVoice} le nom du
-contexte @code{Voice} contenant les notes.  Grâce à l'utilisation de
-@code{associatedVoice}, les doubles tirets @code{--} ou soulignés
-@code{__} seront rendus correctement en trait d'union ou indication de
-mélisme.
+Les syllabes seront alignées selon la dérogation apportée à la propriété
+@code{self-alignment-X} :
 
 @lilypond[relative=1,verbatim,quote]
 <<
   \new Voice = "melody" {
     \time 3/4
-    c2 e4 g f g
+    c2 e4 g2 f
   }
   \new Lyrics \lyricmode {
-    \set associatedVoice = #"melody"
-    play2 the4 game2. __
+    \override LyricText.self-alignment-X = #LEFT
+    play1 a4 game4
   }
 >>
 @end lilypond
-
-@c TODO see also feature request 707 - show how to do this with manual durations
 
 @seealso
 Manuel de notation :
@@ -644,7 +631,7 @@ traditionnellement alignée par la gauche sur la première note du mélisme.
 
 Lorsqu'un mélisme tombe sur une syllabe autre que la dernière d'un mot,
 un trait d'union étiré, indiqué par un double tiret @w{@code{--}} dans
-le fichier source, reliera cette syllabe à la suivante. 
+le fichier source, reliera cette syllabe à la suivante.
 
 Lorsqu'un mélisme tombe sur la dernière syllabe d'un mot ou que ce mot
 n'en comporte qu'une, l'usage est d'indiquer la « tenue » jusqu'à la
@@ -1720,14 +1707,6 @@ words = \lyricmode { la __ la __ }
 >>
 @end lilypond
 
-Le contexte @code{NullVoice} doit prendre place dans un contexte
-@code{Staff} et ne saurait contenir que des notes déjà présentes sur la
-portée en question et à la même octave.  Dans le cas contraire, ce
-@code{NullVoice} pourrait interagir avec les autres voix imprimées de
-façon inopinée.  Par exemple, des notes arbitraires dans un
-@code{NullVoice} pourraient entraîner l'apparition ou la disparition
-d'altérations sur la portée considérée.
-
 Cette façon de procéder permet par ailleurs d'utiliser la fonction
 @code{\partcombine} qui normalement ne peut s'utiliser avec des
 paroles :
@@ -1765,21 +1744,12 @@ aligner = \relative { b'8( c d c) d( d d d) }
 words = \lyricmode { la __ la __ }
 
 \new ChoirStaff <<
-  \new Staff <<
-    \soprano
-    \new NullVoice = "aligner" \aligner
-  >>
+  \new Staff \soprano
+  \new NullVoice = "aligner" \aligner
   \new Lyrics \lyricsto "aligner" \words
   \new Staff \partcombine \altoOne \altoTwo
 >>
 @end lilypond
-
-Vous aurez remarqué que, dans la deuxième partie de la mesure ci-dessus,
-les notes du contexte @code{NullVoice} reprennent le rythme de la portée
-inférieure sans pour autant dévier une seule fois des hauteurs affichées
-dans la voix à laquelle ce @code{NullVoice} est attaché.  Bien que ce ne
-soit pas nécessaire dans le cadre de cet exemple particulier, nous vous
-conseillons de saisir les notes d'un @code{NullVoice} de cette manière.
 
 
 @node Couplets
@@ -2359,6 +2329,9 @@ différents endroits de la documentation de LilyPond :
 La création pas à pas d'une partition pour chœur se trouve dans le
 manuel d'initiation, à la rubrique
 @rlearning{Partition pour chœur à quatre voix mixtes}.
+LilyPond dispose aussi d'un canevas automatisé qui simplifie grandement
+la saisie d'une partiotion pour chœur SATB disponible à la rubrique
+@rlearning{Gabarits préprogrammés}.
 
 @item
 Plusieurs exemples et canevas sont regroupés dans le manuel
@@ -2499,7 +2472,7 @@ Manuel de notation :
 @ref{Mise en forme de la partition},
 @ref{Séparation des systèmes},
 @ref{Définition de la taille de portée},
-@ref{Recours à une voix supplémentaire pour gérer les sauts},
+@ref{Sauts explicites},
 @ref{Espacement vertical}.
 
 Référence des propriétés internes :
@@ -2594,7 +2567,7 @@ anglophones la disent « à la française » -- est expliquée à la rubrique
 @ref{Masquage de portées}.
 
 @item
-La génération d'un matériel d'orchestre fait l'objet de la rubrique 
+La génération d'un matériel d'orchestre fait l'objet de la rubrique
 @ref{Écriture de parties séparées}.  D'autres parties du chapitre
 consacré à la notation spécialisée vous seront utiles selon
 l'orchestration de la pièce.  Tous les instruments ne sont pas accordés
@@ -2696,51 +2669,42 @@ c c c
 @end lilypond
 
 Dans le cas où les changements de personnage se multiplient, il peut
-s'avérer pratique de détourner l'utilisation de la fonction
-@code{\instrumentSwitch} pour gérer les différentes interventions de
-l'un ou de l'autre ; vous devrez auparavant avoir établi la
-définition d'un « instrument » pour chacun des rôles en question :
+s'avérer pratique d'affecter à des variables la définition de
+chacun des rôles afin de simplifier la gestion des différentes
+interventions de l'un ou de l'autre.
 
 @lilypond[quote,verbatim]
-\addInstrumentDefinition #"kaspar"
-  #`((instrumentTransposition . ,(ly:make-pitch -1 0 0))
-     (shortInstrumentName . "Kas.")
-     (clefGlyph . "clefs.G")
-     (clefTransposition . -7)
-     (middleCPosition . 1)
-     (clefPosition . -2)
-     (instrumentCueName . ,(markup #:fontsize 1 #:smallCaps "Kaspar"))
-     (midiInstrument . "voice oohs"))
+kaspar = {
+  \clef "G_8"
+  \set Staff.shortVocalName = "Kas."
+  \set Staff.midiInstrument = "voice oohs"
+  <>^\markup \smallCaps "Kaspar"
+}
 
-\addInstrumentDefinition #"melchior"
-  #`((instrumentTransposition . ,(ly:make-pitch 0 0 0))
-     (shortInstrumentName . "Mel.")
-     (clefGlyph . "clefs.F")
-     (clefTransposition . 0)
-     (middleCPosition . 6)
-     (clefPosition . 2)
-     (instrumentCueName . ,(markup #:fontsize 1 #:smallCaps "Melchior"))
-     (midiInstrument . "choir aahs"))
+melchior = {
+  \clef "bass"
+  \set Staff.shortVocalName = "Mel."
+  \set Staff.midiInstrument = "choir aahs"
+  <>^\markup \smallCaps "Melchior"
+}
 
 \relative c' {
-  \instrumentSwitch "kaspar"
+  \kaspar
   c4 c c c
-  \instrumentSwitch "melchior"
+  \melchior
   a4 a a a
-  \instrumentSwitch "kaspar"
+  \kaspar
   c4 c c c
 }
 @end lilypond
 
 @seealso
+Manuel d'initiation:
+@rlearning{Organisation du code source avec des variables}.
+
 Manuel de notation :
-@ref{Noms d'instrument},
-@ref{Fonctions Scheme},
 @ref{Texte},
 @ref{Commandes pour markup}.
-
-Manuel d'extension des fonctionnalités :
-@rextend{Construction d'un markup en Scheme}.
 
 
 @node Citation-repère

@@ -1,7 +1,7 @@
 @c -*- coding: utf-8; mode: texinfo; documentlanguage: fr -*-
 
 @ignore
-   Translation of GIT committish: 45f95ed2dabb3aef3c9a6995701dc255ba88d68a
+   Translation of GIT committish: 0fe24db3936774a8fb913cb14c997036db7aeb1c
 
    When revising a translation, copy the HEAD committish of the
    version that you are working on.  For details, see the Contributors'
@@ -313,8 +313,24 @@ liaison de tenue --, on ajoute un tilde @code{~} à la première note
 liée.
 
 @lilypond[verbatim,quote,relative=2]
+g4~ g c2~ | c4~ c8 a~ a2 |
+@end lilypond
+
+@cindex isolée, durée
+@cindex durée isolée
+
+Lorsque la hauteur ne change pas, ce qui est toujours le cas pour des
+liaisons de tenue, les hauteurs suivantes peuvent être omises auquel cas
+seules les durées successives seront mentionnées :
+
+@lilypond[verbatim,quote,relative=2]
 g4~ 4 c2~ | 4 ~ 8 a8 ~ 2 |
 @end lilypond
+
+Ce raccourci se révèle fort utile lors d'une succession de rythmes
+appliqués à une même hauteur.  Notez bien que stipuler une durée isolée
+l'attache à la dernière hauteur mentionnée -- une espace entre la
+hauteur et la durée aura pour effet de produire deux notes.
 
 
 @node Liaisons d'articulation
@@ -326,8 +342,8 @@ g4~ 4 c2~ | 4 ~ 8 a8 ~ 2 |
 @cindex legato
 
 @c Le terme de "slur" a deux sens en français : articulation et phrasé.
-@c Je garde ici le terme "legato", tel qu'il apparaît dans le texte original,
-@c car c'est celui qui me semble le plus couramment employé.
+@c Je garde ici le terme "legato", tel qu'il apparaît dans le texte
+@c original, car c'est celui qui me semble le plus couramment employé.
 @c slur = "il zon" (articulation). jcm
 @c phrasing slur = "ils ont des chapeaux ronds" (phrase). jcm
 
@@ -600,7 +616,7 @@ Manuel de notation :
 
 @menu
 * Mesure incomplète::
-* Nolet::
+* N-olet::
 * Note d'ornement::
 @end menu
 
@@ -628,11 +644,11 @@ c2 d |
 @end lilypond
 
 
-@node Nolet
-@unnumberedsubsubsec Nolet
+@node N-olet
+@unnumberedsubsubsec N-olet
 @translationof Tuplets
 
-@cindex nolets
+@cindex n-olets
 @cindex triolets
 
 @funindex \tuplet
@@ -641,9 +657,9 @@ c2 d |
 Glossaire musicologique : @rglosnamed{note value,valeur d'une note},
 @rglosnamed{triplet,triolet}.
 
-Les @notation{nolets} sont créés avec la commande @code{\tuplet}, qui
+Les @notation{n-olets} sont créés avec la commande @code{\tuplet}, qui
 prend deux arguments : une fraction et une expression musicale. La
-fraction représente le nombre de notes du nolet à inscrire dans la durée
+fraction représente le nombre de notes du n-olet à inscrire dans la durée
 normalement attribuée à un certain nombre de notes de même valeur. Dans
 le cas de triolets, par exemple, trois notes recouvrent la même durée
 que deux ; un @notation{triolet} portera donc une fraction de 3/2.
@@ -690,7 +706,7 @@ c2 \acciaccatura b16 c2 |
 @seealso
 Manuel de notation :
 @ruser{Notes d'ornement},
-@ruser{Nolets},
+@ruser{N-olets},
 @ruser{Levées}.
 
 
@@ -1495,7 +1511,7 @@ en début de fichier, après le numéro de version.
 
 Quand LilyPond traite le fichier, le titre et le compositeur sont
 imprimés au début de la partition.  Vous trouverez plus d'informations
-sur les titres à la section 
+sur les titres à la section
 @ruser{Création de titres et entête ou pied de page}.
 
 
@@ -1586,7 +1602,7 @@ absolues permet d'en préserver les octaves.
 La musiqeu peut être agencée de manière plutôt complexe.  Dans le cas
 d'une imbrication de commandes @code{\relative}, chacune des sections
 est indépendante de l'autre :
- 
+
 @lilypond[verbatim,quote]
 \relative c { c'4 \relative c'' { f g } c }
 @end lilypond

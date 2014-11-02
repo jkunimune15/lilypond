@@ -26,9 +26,14 @@
 #include "smobs.hh"
 #include "virtual-methods.hh"
 
-class Music_output
+class Music_output : public Smob<Music_output>
 {
-  DECLARE_SMOBS (Music_output);
+public:
+  int print_smob (SCM, scm_print_state *);
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Music_output ();
+private:
   DECLARE_CLASSNAME (Music_output);
 protected:
   Music_output ();
@@ -38,7 +43,4 @@ public:
   virtual void process ();
 };
 
-DECLARE_UNSMOB (Music_output, music_output);
-Paper_score *unsmob_paper_score (SCM);
-Performance *unsmob_performance (SCM);
 #endif /* MUSIC_OUTPUT_HH */

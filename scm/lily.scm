@@ -446,8 +446,6 @@ messages into errors.")
 (if (ly:get-option 'trace-scheme-coverage)
     (coverage:enable))
 
-(define-public parser #f)
-
 (define music-string-to-path-backends
   '(svg))
 
@@ -547,9 +545,9 @@ messages into errors.")
     "c++.scm"
     "chord-entry.scm"
     "skyline.scm"
-    "stencil.scm"
-    "define-markup-commands.scm"
     "markup.scm"
+    "define-markup-commands.scm"
+    "stencil.scm"
     "modal-transforms.scm"
     "chord-generic-names.scm"
     "chord-ignatzek-names.scm"
@@ -695,6 +693,7 @@ messages into errors.")
     (,ly:font-metric? . "font metric")
     (,ly:grob? . "graphical (layout) object")
     (,ly:grob-array? . "array of grobs")
+    (,ly:grob-properties? . "grob properties")
     (,ly:input-location? . "input location")
     (,ly:item? . "item")
     (,ly:iterator? . "iterator")
@@ -725,6 +724,7 @@ messages into errors.")
     (,ly:stream-event? . "stream event")
     (,ly:translator? . "translator")
     (,ly:translator-group? . "translator group")
+    (,ly:undead? . "undead container")
     (,ly:unpure-pure-container? . "unpure/pure container")
     ))
 
@@ -751,7 +751,7 @@ messages into errors.")
 (define (dump-profile base last this)
   (let* ((outname (format #f "~a.profile" (dir-basename base ".ly")))
          (diff (map - this last)))
-    (ly:progress "\nWriting timing to ~a..." outname)
+    (ly:progress "\nWriting timing to ~a...\n" outname)
     (format (open-file outname "w")
             "time: ~a\ncells: ~a\n"
             (if (ly:get-option 'dump-cpu-profile)

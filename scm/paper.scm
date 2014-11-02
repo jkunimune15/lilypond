@@ -20,13 +20,15 @@
 
 (define-public (set-paper-dimension-variables mod)
   (module-define! mod 'dimension-variables
-                  '(blot-diameter
+                  '(binding-offset
+                    blot-diameter
                     bottom-margin
                     cm
                     footnote-footer-padding
                     footnote-padding
                     horizontal-shift
                     in
+                    incipit-width
                     indent
                     inner-margin
                     inner-margin-default-scaled

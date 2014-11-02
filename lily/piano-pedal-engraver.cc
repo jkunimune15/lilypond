@@ -249,7 +249,7 @@ Piano_pedal_engraver::process_music ()
             mixed:   Ped. _____/\____|
           */
 
-          SCM style = internal_get_property (p->type_->style_sym_);
+          SCM style = get_property (p->type_->style_sym_);
 
           bool mixed = style == ly_symbol2scm ("mixed");
           bool bracket = (mixed
@@ -269,7 +269,7 @@ void
 Piano_pedal_engraver::create_text_grobs (Pedal_info *p, bool mixed)
 {
   SCM s = SCM_EOL;
-  SCM strings = internal_get_property (p->type_->strings_sym_);
+  SCM strings = get_property (p->type_->strings_sym_);
 
   if (scm_ilength (strings) < 3)
     {
@@ -346,7 +346,7 @@ Piano_pedal_engraver::create_bracket_grobs (Pedal_info *p, bool mixed)
     {
       assert (!p->finished_bracket_);
 
-      Grob *cmc = unsmob_grob (get_property ("currentMusicalColumn"));
+      Grob *cmc = Grob::unsmob (get_property ("currentMusicalColumn"));
       p->bracket_->set_bound (RIGHT, cmc);
 
       /*
@@ -424,7 +424,7 @@ Piano_pedal_engraver::finalize ()
       if (p->bracket_)
         {
           SCM cc = get_property ("currentCommandColumn");
-          Item *c = unsmob_item (cc);
+          Item *c = Item::unsmob (cc);
           p->bracket_->set_bound (RIGHT, c);
 
           p->finished_bracket_ = p->bracket_;
@@ -444,7 +444,7 @@ Piano_pedal_engraver::stop_translation_timestep ()
       typeset_all (p);
       if (p->bracket_ && !p->bracket_->get_bound (LEFT))
         {
-          Grob *cmc = unsmob_grob (get_property ("currentMusicalColumn"));
+          Grob *cmc = Grob::unsmob (get_property ("currentMusicalColumn"));
           p->bracket_->set_bound (LEFT, cmc);
         }
     }
@@ -473,7 +473,7 @@ Piano_pedal_engraver::typeset_all (Pedal_info *p)
     {
       Grob *r = p->finished_bracket_->get_bound (RIGHT);
       if (!r)
-        p->finished_bracket_->set_bound (RIGHT, unsmob_grob (get_property ("currentMusicalColumn")));
+        p->finished_bracket_->set_bound (RIGHT, Grob::unsmob (get_property ("currentMusicalColumn")));
 
       p->finished_bracket_ = 0;
     }

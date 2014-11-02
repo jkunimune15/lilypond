@@ -26,30 +26,25 @@ Scheme_listener::call (SCM ev)
   scm_call_1 (callback_, ev);
 }
 
-IMPLEMENT_SMOBS (Scheme_listener);
-IMPLEMENT_DEFAULT_EQUAL_P (Scheme_listener);
 
 Scheme_listener::Scheme_listener (SCM c)
 {
   callback_ = SCM_EOL;
-  self_scm_ = SCM_EOL;
   smobify_self ();
   callback_ = c;
 }
 
 SCM
-Scheme_listener::mark_smob (SCM obj)
+Scheme_listener::mark_smob ()
 {
-  Scheme_listener *me = (Scheme_listener *) SCM_CELL_WORD_1 (obj);
-  return me->callback_;
+  return callback_;
 }
 
 int
-Scheme_listener::print_smob (SCM obj, SCM p, scm_print_state *)
+Scheme_listener::print_smob (SCM p, scm_print_state *)
 {
-  Scheme_listener *me = (Scheme_listener *) SCM_CELL_WORD_1 (obj);
   scm_puts ("#<Scheme_listener ", p);
-  scm_write (me->callback_, p);
+  scm_write (callback_, p);
   scm_puts (">", p);
   return 1;
 }

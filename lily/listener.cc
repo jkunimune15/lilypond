@@ -18,7 +18,6 @@
 */
 
 #include "listener.hh"
-#include "ly-smobs.icc"
 #include "warn.hh"
 
 Listener::Listener ()
@@ -45,29 +44,20 @@ void Listener::listen (SCM ev) const
 }
 
 SCM
-Listener::mark_smob (SCM sm)
+Listener::mark_smob ()
 {
-  Listener *me = (Listener *) SCM_CELL_WORD_1 (sm);
-  if (me->type_)
-    (me->type_->mark_callback) (me->target_);
+  if (type_)
+    (type_->mark_callback) (target_);
   return SCM_EOL;
-}
-
-int
-Listener::print_smob (SCM, SCM p, scm_print_state *)
-{
-  scm_puts ("#<Listener>", p);
-  return 1;
 }
 
 SCM
 Listener::equal_p (SCM a, SCM b)
 {
-  Listener *l1 = unsmob_listener (a);
-  Listener *l2 = unsmob_listener (b);
+  Listener *l1 = Listener::unsmob (a);
+  Listener *l2 = Listener::unsmob (b);
 
   return (*l1 == *l2) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
-IMPLEMENT_SIMPLE_SMOBS (Listener);
-IMPLEMENT_TYPE_P (Listener, "ly:listener?");
+const char Listener::type_p_name_[] = "ly:listener?";

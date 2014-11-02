@@ -21,44 +21,34 @@
 #include "source-file.hh"
 #include "std-string.hh"
 
-#include "ly-smobs.icc"
 
 /* Dummy input location for use if real one is missing.  */
 Input dummy_input_global;
 
-static long input_tag;
+const char Input::type_p_name_[] = "ly:input-location?";
 
-static SCM
-mark_smob (SCM s)
+SCM
+Input::mark_smob ()
 {
-  Input *sc = (Input *) SCM_CELL_WORD_1 (s);
-
-  if (Source_file *sf = sc->get_source_file ())
+  if (Source_file *sf = get_source_file ())
     return sf->self_scm ();
 
   return SCM_EOL;
 }
 
-static int
-print_smob (SCM s, SCM port, scm_print_state *)
+int
+Input::print_smob (SCM port, scm_print_state *)
 {
-  string str = "#<location " + unsmob_input (s)->location_string () + ">";
+  string str = "#<location " + location_string () + ">";
   scm_puts (str.c_str (), port);
   return 1;
 }
 
-static size_t
-free_smob (SCM s)
+SCM
+Input::equal_p (SCM sa, SCM sb)
 {
-  delete unsmob_input (s);
-  return 0;
-}
-
-static SCM
-equal_smob (SCM sa, SCM sb)
-{
-  Input *a = (Input *) SCM_CELL_WORD_1 (sa);
-  Input *b = (Input *) SCM_CELL_WORD_1 (sb);
+  Input *a = unsmob (sa);
+  Input *b = unsmob (sb);
   if (a->get_source_file () == b->get_source_file ()
       && a->start () == b->start ()
       && a->end () == b->end ())
@@ -66,37 +56,3 @@ equal_smob (SCM sa, SCM sb)
   else
     return SCM_BOOL_F;
 }
-
-static void
-start_input_smobs ()
-{
-  input_tag = scm_make_smob_type ("input", 0);
-  scm_set_smob_mark (input_tag, mark_smob);
-  scm_set_smob_free (input_tag, free_smob);
-  scm_set_smob_print (input_tag, print_smob);
-  scm_set_smob_equalp (input_tag, equal_smob);
-}
-
-SCM
-make_input (Input ip)
-{
-  Input *nip = new Input (ip);
-  SCM z;
-
-  SCM_NEWSMOB (z, input_tag, nip);
-  return z;
-}
-
-Input *
-unsmob_input (SCM s)
-{
-  if (SCM_IMP (s))
-    return 0;
-  if (SCM_CAR (s) == (SCM)input_tag) // ugh.
-    return (Input *) SCM_CDR (s);
-  else
-    return 0;
-}
-
-ADD_SCM_INIT_FUNC (input, start_input_smobs);
-

@@ -29,7 +29,6 @@
 #include "scm-hash.hh"
 #include "warn.hh"
 
-#include "ly-smobs.icc"
 
 #include "program-option.hh"
 
@@ -46,6 +45,7 @@ Output_def::Output_def ()
 }
 
 Output_def::Output_def (Output_def const &s)
+  : Smob<Output_def> ()
 {
   scope_ = SCM_EOL;
   parent_ = 0;
@@ -61,26 +61,22 @@ Output_def::~Output_def ()
 {
 }
 
-IMPLEMENT_SMOBS (Output_def);
-IMPLEMENT_DEFAULT_EQUAL_P (Output_def);
 
 SCM
-Output_def::mark_smob (SCM m)
+Output_def::mark_smob ()
 {
-  Output_def *mo = (Output_def*) SCM_CELL_WORD_1 (m);
-
   /* FIXME: why is this necessary?
      all paper_ should be protected by themselves. */
-  if (mo->parent_)
-    scm_gc_mark (mo->parent_->self_scm ());
+  if (parent_)
+    scm_gc_mark (parent_->self_scm ());
 
-  return mo->scope_;
+  return scope_;
 }
 
 void
 assign_context_def (Output_def * m, SCM transdef)
 {
-  Context_def *tp = unsmob_context_def (transdef);
+  Context_def *tp = Context_def::unsmob (transdef);
   assert (tp);
 
   if (tp)
@@ -94,16 +90,15 @@ assign_context_def (Output_def * m, SCM transdef)
 SCM
 find_context_def (Output_def const *m, SCM name)
 {
-  Context_def *cd = unsmob_context_def (m->lookup_variable (name));
+  Context_def *cd = Context_def::unsmob (m->lookup_variable (name));
   return cd ? cd->self_scm () : SCM_EOL;
 }
 
 int
-Output_def::print_smob (SCM s, SCM p, scm_print_state *)
+Output_def::print_smob (SCM p, scm_print_state *)
 {
-  Output_def * def = unsmob_output_def (s);
   scm_puts ("#< ", p);
-  scm_puts (def->class_name (), p);
+  scm_puts (class_name (), p);
   scm_puts (">", p);
   return 1;
 }
@@ -259,5 +254,3 @@ line_dimensions_int (Output_def *def, int n)
     : def->get_dimension (ly_symbol2scm ("indent"));
   return Interval (ind, lw);
 }
-
-

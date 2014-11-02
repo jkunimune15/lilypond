@@ -23,6 +23,7 @@
 #include "context-handle.hh"
 #include "duration.hh"
 #include "engraver.hh"
+#include "grob-properties.hh"
 #include "item.hh"
 #include "rest.hh"
 #include "spanner.hh"
@@ -152,6 +153,7 @@ Auto_beam_engraver::Auto_beam_engraver ()
   process_acknowledged_count_ = 0;
   stems_ = 0;
   shortest_mom_ = Moment (Rational (1, 4));
+  extend_mom_ = Moment (-1);
   finished_beam_ = 0;
   finished_grouping_ = 0;
   grouping_ = 0;
@@ -240,7 +242,7 @@ Auto_beam_engraver::begin_beam ()
   stems_ = new vector<Item *>;
   grouping_ = new Beaming_pattern ();
   beaming_options_.from_context (context ());
-  beam_settings_ = updated_grob_properties (context (), ly_symbol2scm ("Beam"));
+  beam_settings_ = Grob_property_info (context (), ly_symbol2scm ("Beam")).updated ();
 
   beam_start_context_.set_context (context ()->get_parent_context ());
   beam_start_moment_ = now_mom ();
@@ -394,7 +396,7 @@ Auto_beam_engraver::acknowledge_stem (Grob_info info)
       return;
     }
 
-  int durlog = unsmob_duration (ev->get_property ("duration"))->duration_log ();
+  int durlog = Duration::unsmob (ev->get_property ("duration"))->duration_log ();
 
   if (durlog <= 2)
     {
@@ -410,10 +412,10 @@ Auto_beam_engraver::acknowledge_stem (Grob_info info)
   if (!is_same_grace_state (beam_start_location_, now))
     return;
 
-  Duration *stem_duration = unsmob_duration (ev->get_property ("duration"));
+  Duration *stem_duration = Duration::unsmob (ev->get_property ("duration"));
   Moment dur = stem_duration->get_length ();
 
-  //Moment dur = unsmob_duration (ev->get_property ("duration"))->get_length ();
+  //Moment dur = Duration::unsmob (ev->get_property ("duration"))->get_length ();
   Moment measure_now = measure_position (context ());
   bool recheck_needed = false;
 

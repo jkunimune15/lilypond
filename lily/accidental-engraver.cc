@@ -99,7 +99,7 @@ public:
 };
 
 /*
-  localKeySignature is changed at runtime, which means that references
+  localAlterations is changed at runtime, which means that references
   in grobs should always store ly_deep_copy ()s of those.
 */
 
@@ -120,7 +120,7 @@ Accidental_engraver::update_local_key_signature (SCM new_sig)
 {
   last_keysig_ = new_sig;
   set_context_property_on_children (context (),
-                                    ly_symbol2scm ("localKeySignature"),
+                                    ly_symbol2scm ("localAlterations"),
                                     new_sig);
 
   Context *trans = context ()->get_parent_context ();
@@ -131,9 +131,9 @@ Accidental_engraver::update_local_key_signature (SCM new_sig)
   */
 
   SCM val;
-  while (trans && trans->where_defined (ly_symbol2scm ("localKeySignature"), &val) == trans)
+  while (trans && trans->here_defined (ly_symbol2scm ("localAlterations"), &val))
     {
-      trans->set_property ("localKeySignature", ly_deep_copy (last_keysig_));
+      trans->set_property ("localAlterations", ly_deep_copy (last_keysig_));
       trans = trans->get_parent_context ();
     }
 }
@@ -233,7 +233,7 @@ Accidental_engraver::process_acknowledged ()
           Stream_event *note = accidentals_[i].melodic_;
           Context *origin = accidentals_[i].origin_;
 
-          Pitch *pitch = unsmob_pitch (note->get_property ("pitch"));
+          Pitch *pitch = Pitch::unsmob (note->get_property ("pitch"));
           if (!pitch)
             continue;
 
@@ -348,7 +348,7 @@ Accidental_engraver::make_suggested_accidental (Stream_event * /* note */,
   Grob *a = trans->make_item ("AccidentalSuggestion", note_head->self_scm ());
 
   Side_position_interface::add_support (a, note_head);
-  if (Grob *stem = unsmob_grob (a->get_object ("stem")))
+  if (Grob *stem = Grob::unsmob (a->get_object ("stem")))
     Side_position_interface::add_support (a, stem);
 
   a->set_parent (note_head, X_AXIS);
@@ -387,7 +387,7 @@ Accidental_engraver::stop_translation_timestep ()
 
       int barnum = measure_number (origin);
 
-      Pitch *pitch = unsmob_pitch (note->get_property ("pitch"));
+      Pitch *pitch = Pitch::unsmob (note->get_property ("pitch"));
       if (!pitch)
         continue;
 
@@ -397,12 +397,12 @@ Accidental_engraver::stop_translation_timestep ()
       SCM key = scm_cons (scm_from_int (o), scm_from_int (n));
 
       Moment end_mp = measure_position (context (),
-                                        unsmob_duration (note->get_property ("duration")));
+                                        Duration::unsmob (note->get_property ("duration")));
       SCM position = scm_cons (scm_from_int (barnum), end_mp.smobbed_copy ());
 
       SCM localsig = SCM_EOL;
       while (origin
-             && origin->where_defined (ly_symbol2scm ("localKeySignature"), &localsig))
+             && origin->where_defined (ly_symbol2scm ("localAlterations"), &localsig))
         {
           bool change = false;
           if (accidentals_[i].tied_
@@ -429,7 +429,7 @@ Accidental_engraver::stop_translation_timestep ()
             }
 
           if (change)
-            origin->set_property ("localKeySignature", localsig);
+            origin->set_property ("localAlterations", localsig);
 
           origin = origin->get_parent_context ();
         }
@@ -498,7 +498,7 @@ Accidental_engraver::acknowledge_finger (Grob_info info)
 void
 Accidental_engraver::process_music ()
 {
-  SCM sig = get_property ("keySignature");
+  SCM sig = get_property ("keyAlterations");
   if (last_keysig_ != sig)
     update_local_key_signature (sig);
 }
@@ -530,9 +530,9 @@ ADD_TRANSLATOR (Accidental_engraver,
                 "extraNatural "
                 "harmonicAccidentals "
                 "accidentalGrouping "
-                "keySignature "
-                "localKeySignature ",
+                "keyAlterations "
+                "localAlterations ",
 
                 /* write */
-                "localKeySignature "
+                "localAlterations "
                );

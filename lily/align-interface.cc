@@ -36,7 +36,7 @@ MAKE_SCHEME_CALLBACK (Align_interface, align_to_minimum_distances, 1);
 SCM
 Align_interface::align_to_minimum_distances (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
 
   me->set_property ("positioning-done", SCM_BOOL_T);
 
@@ -52,7 +52,7 @@ MAKE_SCHEME_CALLBACK (Align_interface, align_to_ideal_distances, 1);
 SCM
 Align_interface::align_to_ideal_distances (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
 
   me->set_property ("positioning-done", SCM_BOOL_T);
 
@@ -353,11 +353,11 @@ void
 Align_interface::set_ordered (Grob *me)
 {
   SCM ga_scm = me->get_object ("elements");
-  Grob_array *ga = unsmob_grob_array (ga_scm);
+  Grob_array *ga = Grob_array::unsmob (ga_scm);
   if (!ga)
     {
       ga_scm = Grob_array::make_array ();
-      ga = unsmob_grob_array (ga_scm);
+      ga = Grob_array::unsmob (ga_scm);
       me->set_object ("elements", ga_scm);
     }
 
@@ -367,7 +367,7 @@ Align_interface::set_ordered (Grob *me)
 ADD_INTERFACE (Align_interface,
                "Order grobs from top to bottom, left to right, right to left"
                " or bottom to top.  For vertical alignments of staves, the"
-               " @code{break-system-details} of the left"
+               " @code{line-break-system-details} of the left"
                " @rinternals{NonMusicalPaperColumn} may be set to tune"
                " vertical spacing.",
 

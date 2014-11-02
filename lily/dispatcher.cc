@@ -20,12 +20,9 @@
 #include "dispatcher.hh"
 #include "input.hh"
 #include "international.hh"
-#include "ly-smobs.icc"
 #include "warn.hh"
 
-IMPLEMENT_SMOBS (Dispatcher);
-IMPLEMENT_TYPE_P (Dispatcher, "ly:dispatcher?");
-IMPLEMENT_DEFAULT_EQUAL_P (Dispatcher);
+const char Dispatcher::type_p_name_[] = "ly:dispatcher?";
 
 Dispatcher::~Dispatcher ()
 {
@@ -33,7 +30,6 @@ Dispatcher::~Dispatcher ()
 
 Dispatcher::Dispatcher ()
 {
-  self_scm_ = SCM_EOL;
   listeners_ = SCM_EOL;
   dispatchers_ = SCM_EOL;
   listen_classes_ = SCM_EOL;
@@ -45,21 +41,19 @@ Dispatcher::Dispatcher ()
 }
 
 SCM
-Dispatcher::mark_smob (SCM sm)
+Dispatcher::mark_smob ()
 {
-  Dispatcher *me = (Dispatcher *) SCM_CELL_WORD_1 (sm);
-  scm_gc_mark (me->dispatchers_);
-  scm_gc_mark (me->listen_classes_);
-  return me->listeners_;
+  scm_gc_mark (dispatchers_);
+  scm_gc_mark (listen_classes_);
+  return listeners_;
 }
 
 int
-Dispatcher::print_smob (SCM s, SCM p, scm_print_state *)
+Dispatcher::print_smob (SCM p, scm_print_state *)
 {
-  Dispatcher *me = (Dispatcher *) SCM_CELL_WORD_1 (s);
   scm_puts ("#<Dispatcher ", p);
   scm_write (scm_call_1 (ly_lily_module_constant ("hash-table->alist"),
-                         me->listeners_), p);
+                         listeners_), p);
   scm_puts (">", p);
   return 1;
 }
@@ -82,7 +76,7 @@ IMPLEMENT_LISTENER (Dispatcher, dispatch);
 void
 Dispatcher::dispatch (SCM sev)
 {
-  Stream_event *ev = unsmob_stream_event (sev);
+  Stream_event *ev = Stream_event::unsmob (sev);
   SCM class_list = ev->get_property ("class");
   if (!scm_is_pair (class_list))
     {
@@ -149,7 +143,7 @@ Dispatcher::dispatch (SCM sev)
           assert (lists[0].prio > last_priority);
           last_priority = lists[0].prio;
 
-          Listener *l = unsmob_listener (scm_cdar (lists[0].list));
+          Listener *l = Listener::unsmob (scm_cdar (lists[0].list));
           l->listen (ev->self_scm ());
 #if 0
           sent = true;
@@ -235,7 +229,7 @@ Dispatcher::internal_add_listener (Listener l, SCM ev_class, int priority)
       for (SCM disp = dispatchers_; scm_is_pair (disp); disp = scm_cdr (disp))
         {
           int priority = scm_to_int (scm_cdar (disp));
-          Dispatcher *d = unsmob_dispatcher (scm_caar (disp));
+          Dispatcher *d = Dispatcher::unsmob (scm_caar (disp));
           d->internal_add_listener (GET_LISTENER (dispatch), ev_class, priority);
         }
       listen_classes_ = scm_cons (ev_class, listen_classes_);
@@ -262,7 +256,7 @@ Dispatcher::remove_listener (Listener l, SCM ev_class)
   SCM dummy = scm_cons (SCM_EOL, list);
   SCM e = dummy;
   while (scm_is_pair (scm_cdr (e)))
-    if (*unsmob_listener (scm_cdadr (e)) == l && first)
+    if (*Listener::unsmob (scm_cdadr (e)) == l && first)
       {
         scm_set_cdr_x (e, scm_cddr (e));
         first = false;
@@ -280,7 +274,7 @@ Dispatcher::remove_listener (Listener l, SCM ev_class)
       /* Unregister with all dispatchers. */
       for (SCM disp = dispatchers_; scm_is_pair (disp); disp = scm_cdr (disp))
         {
-          Dispatcher *d = unsmob_dispatcher (scm_caar (disp));
+          Dispatcher *d = Dispatcher::unsmob (scm_caar (disp));
           d->remove_listener (GET_LISTENER (dispatch), ev_class);
         }
       listen_classes_ = scm_delq_x (ev_class, listen_classes_);

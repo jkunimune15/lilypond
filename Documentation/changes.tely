@@ -60,6 +60,255 @@ which scares away people.
 * only show user-visible changes.
 
 @end ignore
+
+@item
+Page numbers may now be printed in roman numerals, by setting the
+@code{page-number-type} paper variable.
+
+@item
+It is now possible to use @code{\time} and @code{\partial}
+together to change the time signature in mid measure.
+
+@lilypond[verbatim,quote,relative=1]
+\override Score.BarNumber.break-visibility = #end-of-line-invisible
+\partial 4 \time 3/4 f4 | 2 4 | 2 \bar "||"
+\time 9/8 \partial 4. f8 8 8 | 2. 8 8 8 |
+@end lilypond
+
+@item
+It is now possible to override the @code{text} property of
+chord names.
+
+@lilypond[verbatim,fragment,quote]
+<<
+\new ChordNames \chordmode {
+  a' b c:7
+  \once \override ChordName.text = #"foo"
+  d
+}
+>>
+@end lilypond
+
+@item
+Improved horizontal alignment when using @code{TextScript},
+with @code{DynamicText} or @code{LyricText}.
+
+@item
+A new command @code{\magnifyStaff} has been added which scales staff
+sizes, staff lines, bar lines, beamlets and horizontal spacing generally
+at the @code{Staff} context level.  Staff lines are prevented from being
+scaled smaller than the default since the thickness of stems, slurs, and
+the like are all based on the staff line thickness.
+
+@item
+@code{InstrumentName} now supports @code{text-interface}.
+
+@item
+There is now support for controlling the @q{expression level} of
+MIDI channels using the @code{Staff.midiExpression} context property.
+This can be used to alter the perceived volume of even sustained notes
+(albeit in a very @q{low-level} way) and accepts a number value between
+@code{0.0} and @code{1.0}.
+
+@example
+\score @{
+  \new Staff \with @{
+    midiExpression = #0.6
+    midiInstrument = #"clarinet"
+  @}
+  <<
+    @{ a'1~ a'1 @}
+    @{
+      \set Staff.midiExpression = #0.7 s4\f\<
+      \set Staff.midiExpression = #0.8 s4
+      \set Staff.midiExpression = #0.9 s4
+      \set Staff.midiExpression = #1.0 s4
+
+      \set Staff.midiExpression = #0.9 s4\>
+      \set Staff.midiExpression = #0.8 s4
+      \set Staff.midiExpression = #0.7 s4
+      \set Staff.midiExpression = #0.6 s4\!
+    @}
+  >>
+  \midi @{ @}
+@}
+@end example
+
+@item
+Support for making it easier to use alternative @q{music} fonts other
+than the default Emmentaler in LilyPond has been added.  See
+@uref{http://fonts.openlilylib.org/} for more information.
+
+@item
+Grobs and their parents can now be aligned separately allowing
+more flexibility for grob positions.  For example the @q{left} edge of a
+grob can now be aligned on the @q{center} of its parent.
+
+@item
+Improvements to the @code{\partial} command have been made to
+avoid problems when using multiple, parallel contexts.
+
+@item @code{\chordmode} can now use @code{< >} and @code{<< >>}
+constructs.
+
+@item
+The @code{NullVoice} context is now @q{below} @code{Score}.
+
+@item
+A new command @code{\tagGroup} has now been added.  This compliments
+the existing @code{\keepWithTag} and @code{\removeWithTag} commands.
+For Example:
+
+@example
+\tagGroup #'(violinI violinII viola cello)
+@end example
+
+declares a list of @q{tags} that belong to a single @q{tag group}.
+
+@example
+\keepwithTag#'violinI
+@end example
+
+Is now only concerned with @q{tags} from @q{violinI}’s tag group.
+
+Any element of the included music tagged with one or more tags from the
+group, but @emph{not} with @var{violinI}, will be removed.
+
+@item
+The @code{\addlyrics} function now works with arbitrary contexts
+incuding @code{Staff}.
+
+@item
+String numbers can now also be used to print roman numerals
+(e.g. for unfretted string instruments).
+@lilypond[verbatim,quote,relative=2]
+c2\2
+\romanStringNumbers
+c\2
+\arabicStringNumbers
+c1\3
+@end lilypond
+
+@item
+The @code{thin-kern} property of the @code{BarLine} grob has been
+renamed to @code{segno-kern}.
+
+@item
+@code{KeyCancellation} grobs now ignore cue clefs (like
+@code{KeySignature} grobs do).
+
+@item
+Add support for @code{\once@tie{}\unset}
+
+@item
+It is now possible to individually color both the dots and parentheses
+in fret diagrams when using the @code{\fret-diagram-verbose} markup
+command.
+
+@lilypond[verbatim,quote,relative=1]
+\new Voice {
+  c1^\markup {
+    \override #'(fret-diagram-details . (
+                 (finger-code . in-dot))) {
+      \fret-diagram-verbose #'((mute 6)
+                               (place-fret 5 3 1 red)
+                               (place-fret 4 5 2 inverted)
+                               (place-fret 3 5 3 green)
+                               (place-fret 2 5 4 blue inverted)
+                               (place-fret 1 3 1 violet)
+                               (barre 5 1 3 ))
+    }
+  }
+  c1^\markup {
+    \override #'(fret-diagram-details . (
+                 (finger-code . below-string))) {
+      \fret-diagram-verbose #'((mute 6)
+                             (place-fret 5 3 1 red parenthesized)
+                             (place-fret 4 5 2 yellow
+                                               default-paren-color
+                                               parenthesized)
+                             (place-fret 3 5 3 green)
+                             (place-fret 2 5 4 blue )
+                             (place-fret 1 3 1)
+                             (barre 5 1 3))
+    }
+  }
+}
+@end lilypond
+
+@item
+Two new properties have been added for use in
+@code{fret-diagram-details} when using the @code{\fret-diagram-verbose}
+markup command; @code{fret-label-horizontal-offset} which affects the
+@code{fret-label-indication} and @code{paren-padding} which controls the
+space between the dot and the parentheses surrounding it.
+
+@lilypond[verbatim,quote,relative=1]
+\new Voice {
+  c1^\markup {
+    \fret-diagram-verbose #'((mute 6)
+                             (place-fret 5 3 1)
+                             (place-fret 4 5 2)
+                             (place-fret 3 5 3)
+                             (place-fret 1 6 4 parenthesized)
+                             (place-fret 2 3 1)
+                             (barre 5 2 3))
+  }
+  c1^\markup {
+    \override #'(fret-diagram-details . (
+                 (fret-label-horizontal-offset . 2)
+                 (paren-padding . 0.25))) {
+      \fret-diagram-verbose #'((mute 6)
+                               (place-fret 5 3 1)
+                               (place-fret 4 5 2)
+                               (place-fret 3 5 3)
+                               (place-fret 1 6 4 parenthesized)
+                               (place-fret 2 3 1)
+                               (barre 5 2 3))
+    }
+  }
+}
+@end lilypond
+
+@item
+A new markup command @code{\justify-line} has been added.  Similar to
+the @code{\fill-line} markup command except that instead of setting
+@emph{words} in columns, the @code{\justify-line} command balances the
+whitespace between them ensuring that when there are three or more
+words in a markup, the whitespace is always consistent.
+
+@lilypond[quote,verbatim,papersize=a6]
+\markup \fill-line {oooooo oooooo oooooo oooooo}
+\markup \fill-line {ooooooooo oooooooo oo ooo}
+@end lilypond
+
+@lilypond[quote,verbatim,papersize=a6]
+\markup \justify-line {oooooo oooooo oooooo oooooo}
+\markup \justify-line {ooooooooo oooooooo oo ooo}
+@end lilypond
+
+@item
+A new command @code{\magnifyMusic} has been added, which allows
+the notation size to be changed without changing the staff size,
+while automatically scaling stems, beams, and horizontal spacing.
+
+@lilypond[verbatim,quote]
+\new Staff <<
+  \new Voice \relative {
+    \voiceOne
+    <e' e'>4 <f f'>8. <g g'>16 <f f'>8 <e e'>4 r8
+  }
+  \new Voice \relative {
+    \voiceTwo
+    \magnifyMusic 0.63 {
+      \override Score.SpacingSpanner.spacing-increment = #(* 1.2 0.63)
+      r32 c'' a c a c a c r c a c a c a c
+      r c a c a c a c a c a c a c a c
+    }
+  }
+>>
+@end lilypond
+
 @item
 A new flexible template suitable for a range of choral music, is now
 provided.  This may be used to create simple choral music, with or
@@ -214,14 +463,17 @@ A new note head style for Tabulature has been added;
 @code{TabNoteHead.style = #'slash}.
 
 @item
-Four new Clefs have been added.  @emph{Double G}, @emph{Tenor G},
-@emph{Varpercussion} and @emph{varC}.
+Four new Clef glyphs have been added @emph{Double G}, @emph{Tenor G},
+@emph{Varpercussion} and @emph{varC} and their related tessitura.
 @lilypond[verbatim,quote,fragment]
   \override Staff.Clef.full-size-change = ##t
 
   \clef "GG" c c c c
   \clef "tenorG" c c c c
   \clef "varC" c c c c
+  \clef "altovarC" c c c c
+  \clef "tenorvarC" c c c c
+  \clef "baritonevarC" c c c c
   \clef "varpercussion" c c c c
 
   \break
@@ -230,6 +482,9 @@ Four new Clefs have been added.  @emph{Double G}, @emph{Tenor G},
   \clef "GG" c c c c
   \clef "tenorG" c c c c
   \clef "varC" c c c c
+  \clef "altovarC" c c c c
+  \clef "tenorvarC" c c c c
+  \clef "baritonevarC" c c c
   \clef "varpercussion" c c c c
 @end lilypond
 

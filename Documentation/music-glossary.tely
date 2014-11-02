@@ -12,7 +12,12 @@ terms used in the documentation manuals for LilyPond version
 @version{}.
 @end macro
 
-@c `Music Glossary' was born 1999-10-04 with git commit 280a0bb...
+@c `Music Glossary' was born 1999-10-04 with this commit:
+@c lilypond-1.2.12
+@c author: fred
+@c commit: be4e46f61b1a8dec0922e0fd849c626beb6ab9be
+@c   file: Documentation/user/glossary.texi
+
 @macro copyrightDeclare
 Copyright @copyright{} 1999--2014 by the authors
 @end macro
@@ -3618,8 +3623,7 @@ played above the bass notes.
 @lilypond[quote,line-width=13.0\cm]
 \new GrandStaff <<
   \new Staff = "rh" \with {
-    fontSize = #-3
-    \override StaffSymbol #'staff-space = #(magstep -3)
+    \magnifyStaff #2/3
   } \relative c'' {
     \clef treble
     \key es \major
@@ -3889,17 +3893,17 @@ the parallel minor scale, or the incomplete dominant seventh chord.
    ((thick (* (magstep font-size)
       (ly:output-def-lookup layout 'line-thickness)))
     (underline-thick (* thickness thick))
-    (markup (interpret-markup layout props arg))
-    (x1 (car (ly:stencil-extent markup X)))
-    (x2 (cdr (ly:stencil-extent markup X)))
-    (y1 (car (ly:stencil-extent markup Y)))
-    (y2 (cdr (ly:stencil-extent markup Y)))
+    (m (interpret-markup layout props arg))
+    (x1 (car (ly:stencil-extent m X)))
+    (x2 (cdr (ly:stencil-extent m X)))
+    (y1 (car (ly:stencil-extent m Y)))
+    (y2 (cdr (ly:stencil-extent m Y)))
     (dx (* extension (- x2 x1)))
     (dy (* extension (- y2 y1)))
     (line (make-line-stencil underline-thick
       (- x1 dx) (- y1 dy)
       (+ x2 dx) (+ y2 dy))))
-   (ly:stencil-add markup line)))
+   (ly:stencil-add m line)))
 <<
   {
     <g e c>1 <a f d> <b g e>
@@ -8170,7 +8174,7 @@ standard.  Tuning forks for other pitches are available.
 
 ES: grupo de valoración especial,
 I: gruppi irregolari,
-F: ?,
+F: N-olet,
 D: N-tole,
 NL: Antimetrische figuur,
 DK: ?,

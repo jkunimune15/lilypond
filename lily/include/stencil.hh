@@ -47,7 +47,7 @@ using namespace std;
     efficient to add "fresh" stencils to what you're going to build.
 
     * Do not create Stencil objects on the heap. That includes passing
-    around Stencil* which are produced by unsmob_stencil(). Either
+    around Stencil* which are produced by Stencil::unsmob(). Either
     copy Stencil objects, or use SCM references.
 
     * Empty stencils have empty dimensions.  If add_at_edge is used to
@@ -55,12 +55,15 @@ using namespace std;
 
     DIMENSIONS = (Interval (0, 0), Interval (0, 0)
 */
-class Stencil
+class Stencil : public Simple_smob<Stencil>
 {
+public:
+  SCM mark_smob ();
+  static const char type_p_name_[];
+private:
   Box dim_;
   SCM expr_;
 
-  DECLARE_SIMPLE_SMOBS (Stencil);
 public:
   Stencil (Box, SCM s);
   Stencil ();
@@ -90,7 +93,6 @@ public:
   static SCM skylines_from_stencil (SCM, Real, Axis);
 };
 
-DECLARE_UNSMOB (Stencil, stencil);
 
 void interpret_stencil_expression (SCM expr,
                                    SCM (*func) (void *, SCM),

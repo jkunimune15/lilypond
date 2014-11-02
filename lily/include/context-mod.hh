@@ -34,8 +34,11 @@
   Modifications for an interpretation context as given in the
   input.
 */
-struct Context_mod
+struct Context_mod : public Simple_smob<Context_mod>
 {
+  SCM mark_smob ();
+  int print_smob (SCM, scm_print_state *);
+  static const char type_p_name_[];
 private:
   SCM mods_;
 public:
@@ -47,10 +50,7 @@ public:
   Context_mod ();
   Context_mod (Context_mod const &);
   Context_mod (SCM mod_list);
-  DECLARE_SIMPLE_SMOBS (Context_mod);
 };
 
-DECLARE_UNSMOB (Context_mod, context_mod);
 
 #endif /* CONTEXT_MOD_HH */
-

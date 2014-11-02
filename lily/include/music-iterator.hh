@@ -58,15 +58,20 @@
 
    merge pending_moment and process?
 */
-class Music_iterator
+class Music_iterator : public Smob<Music_iterator>
 {
+public:
+  int print_smob (SCM, scm_print_state *);
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Music_iterator ();
 protected:
   Moment music_length_;
   Moment start_mom_;
 
   DECLARE_CLASSNAME (Music_iterator);
-  DECLARE_SMOBS (Music_iterator);
-  Music_iterator (Music_iterator const &);
+private:
+  Music_iterator (Music_iterator const &); // Do not define!  Not copyable!
 
 public:
   Moment music_get_length () const;
@@ -113,6 +118,5 @@ bool is_child_context (Context *me, Context *child);
     return c->unprotect ();                                             \
   }
 
-DECLARE_UNSMOB (Music_iterator, iterator);
 
 #endif // MUSIC_ITERATOR_HH

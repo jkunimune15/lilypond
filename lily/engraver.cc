@@ -20,6 +20,7 @@
 #include "engraver.hh"
 
 #include "context.hh"
+#include "grob-properties.hh"
 #include "international.hh"
 #include "music.hh"
 #include "paper-column.hh"
@@ -51,12 +52,12 @@ Grob_info
 Engraver::make_grob_info (Grob *e, SCM cause)
 {
   /* TODO: Remove Music code when it's no longer needed */
-  if (Music *m = unsmob_music (cause))
+  if (Music *m = Music::unsmob (cause))
     {
       cause = m->to_event ()->unprotect ();
     }
   if (e->get_property ("cause") == SCM_EOL
-      && (unsmob_stream_event (cause) || unsmob_grob (cause)))
+      && (Stream_event::is_smob (cause) || Grob::is_smob (cause)))
     e->set_property ("cause", cause);
 
   return Grob_info (this, e);
@@ -117,7 +118,7 @@ Engraver::internal_make_grob (SCM symbol,
   (void)fun;
 #endif
 
-  SCM props = updated_grob_properties (context (), symbol);
+  SCM props = Grob_property_info (context (), symbol).updated ();
 
   Grob *grob = 0;
 
@@ -170,16 +171,10 @@ Engraver::internal_make_spanner (SCM x, SCM cause, char const *name,
   return sp;
 }
 
-Engraver *
-unsmob_engraver (SCM eng)
-{
-  return dynamic_cast<Engraver *> (unsmob_translator (eng));
-}
-
 bool
 ly_is_grob_cause (SCM obj)
 {
-  return unsmob_grob (obj) || unsmob_stream_event (obj) || (obj == SCM_EOL);
+  return Grob::is_smob (obj) || Stream_event::is_smob (obj) || (obj == SCM_EOL);
 }
 
 #include "translator.icc"

@@ -81,8 +81,6 @@ inline SCM ly_symbol2scm (char const *x) { return scm_from_locale_symbol ((x)); 
 #endif
 
 /*
-  TODO: rename me to ly_c_lily_module_eval
-
   we don't have to protect the result; it's already part of the
   exports list of the module.
 */
@@ -95,11 +93,12 @@ inline SCM ly_symbol2scm (char const *x) { return scm_from_locale_symbol ((x)); 
     if (__builtin_constant_p ((x)))                                     \
       {                                                                 \
         if (!cached)                                                    \
-          value = cached = scm_eval (scm_from_locale_symbol (x),                \
-                                    global_lily_module);                \
+          value = cached =                                              \
+            scm_variable_ref (scm_c_module_lookup (global_lily_module, (x))); \
       }                                                                 \
     else                                                                \
-      value = scm_eval (scm_from_locale_symbol (x), global_lily_module);        \
+      value =                                                           \
+        scm_variable_ref (scm_c_module_lookup (global_lily_module, (x))); \
     value;                                                              \
   })
 
@@ -110,22 +109,6 @@ inline SCM ly_symbol2scm (char const *x) { return scm_from_locale_symbol ((x)); 
 #define DECLARE_SCHEME_CALLBACK(NAME, ARGS)     \
   static SCM NAME ARGS;                         \
   static SCM NAME ## _proc
-#define ADD_TYPE_PREDICATE(func, type_name) \
-  void \
-  func ## _type_adder ()                        \
-  {\
-    ly_add_type_predicate ((Type_predicate_ptr)func, type_name);        \
-  }\
-  ADD_SCM_INIT_FUNC(func ## _type_adder_ctor, \
-                    func ## _type_adder);
-#define ADD_TYPE_PREDICATE(func, type_name) \
-  void \
-  func ## _type_adder ()                        \
-  {\
-    ly_add_type_predicate ((Type_predicate_ptr)func, type_name);        \
-  }\
-  ADD_SCM_INIT_FUNC(func ## _type_adder_ctor, \
-                    func ## _type_adder);
 
 string mangle_cxx_identifier (string);
 
@@ -233,6 +216,6 @@ void ly_check_name (const string &cxx, const string &fname);
       }                                                                 \
   }
 
-#define LY_ASSERT_SMOB(klass, var, number) LY_ASSERT_TYPE(klass::unsmob, var, number)
+#define LY_ASSERT_SMOB(klass, var, number) LY_ASSERT_TYPE(klass::is_smob, var, number)
 
 #endif /* LILY_GUILE_MACROS_HH */

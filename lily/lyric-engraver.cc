@@ -95,7 +95,7 @@ get_voice_to_lyrics (Context *lyrics)
   bool searchForVoice = to_boolean (lyrics->get_property ("searchForVoice"));
 
   SCM avc = lyrics->get_property ("associatedVoiceContext");
-  if (Context *c = unsmob_context (avc))
+  if (Context *c = Context::unsmob (avc))
     return c;
 
   SCM voice_name = lyrics->get_property ("associatedVoice");
@@ -112,11 +112,15 @@ get_voice_to_lyrics (Context *lyrics)
         nm = nm.substr (0, idx);
     }
 
+  SCM voice_type = lyrics->get_property ("associatedVoiceType");
+  if (!scm_is_symbol (voice_type))
+    return 0;
+
   Context *parent = lyrics;
   Context *voice = 0;
   while (parent && !voice)
     {
-      voice = find_context_below (parent, ly_symbol2scm ("Voice"), nm);
+      voice = find_context_below (parent, voice_type, nm);
       parent = parent->get_parent_context ();
     }
 
@@ -127,7 +131,7 @@ get_voice_to_lyrics (Context *lyrics)
   voice = 0;
   while (parent && !voice)
     {
-      voice = find_context_below (parent, ly_symbol2scm ("Voice"), "");
+      voice = find_context_below (parent, voice_type, "");
       parent = parent->get_parent_context ();
     }
 
@@ -135,22 +139,36 @@ get_voice_to_lyrics (Context *lyrics)
 }
 
 Grob *
-get_current_note_head (Context *voice, bool include_grace_notes)
+get_current_note_head (Context *voice)
 {
   Moment now = voice->now_mom ();
   for (SCM s = voice->get_property ("busyGrobs");
        scm_is_pair (s); s = scm_cdr (s))
     {
-      Grob *g = unsmob_grob (scm_cdar (s));;
-      Moment *end_mom = unsmob_moment (scm_caar (s));
+      Grob *g = Grob::unsmob (scm_cdar (s));;
+      Moment *end_mom = Moment::unsmob (scm_caar (s));
       if (!end_mom || !g)
         {
           programming_error ("busyGrobs invalid");
           continue;
         }
 
-      if (((end_mom->main_part_ > now.main_part_)
-           || (include_grace_notes && end_mom->grace_part_ > now.grace_part_))
+      // It's a bit irritating that we just have the length and
+      // duration of the Grob.
+      Moment end_from_now =
+        get_event_length (Stream_event::unsmob (g->get_property ("cause")), now)
+        + now;
+      // We cannot actually include more than a single grace note
+      // using busyGrobs on ungraced lyrics since a grob ending on
+      // grace time will just have disappeared from busyGrobs by the
+      // time our ungraced lyrics appear.  At best we may catch a
+      // single grace note.
+      //
+      // However, a single grace note ending on a non-grace time is
+      // indistinguishable from a proper note ending on a non-grace
+      // time.  So we really have no way to obey includeGraceNotes
+      // here.  Not with this mechanism.
+      if ((*end_mom == end_from_now)
           && dynamic_cast<Item *> (g)
           && Note_head::has_interface (g))
         {
@@ -170,22 +188,15 @@ Lyric_engraver::stop_translation_timestep ()
 
       if (voice)
         {
-          bool include_grace_notes = to_boolean (get_property ("includeGraceNotes"));
-          Grob *head = get_current_note_head (voice, include_grace_notes);
+          Grob *head = get_current_note_head (voice);
 
           if (head)
             {
-              text_->set_parent (head, X_AXIS);
+              text_->set_parent (head->get_parent(X_AXIS), X_AXIS);
               if (melisma_busy (voice)
                   && !to_boolean (get_property ("ignoreMelismata")))
                 text_->set_property ("self-alignment-X",
                                      get_property ("lyricMelismaAlignment"));
-            }
-          else
-            {
-              text_->warning (_ ("Lyric syllable does not have note."
-                                 "  Use \\lyricsto or associatedVoice."));
-              text_->set_property ("X-offset", scm_from_int (0));
             }
         }
 
@@ -204,7 +215,6 @@ ADD_TRANSLATOR (Lyric_engraver,
 
                 /* read */
                 "ignoreMelismata "
-                "includeGraceNotes "
                 "lyricMelismaAlignment "
                 "searchForVoice",
 

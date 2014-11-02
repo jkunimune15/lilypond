@@ -27,10 +27,13 @@
 #include "smobs.hh"
 #include "virtual-methods.hh"
 
-class Score
+class Score : public Smob<Score>
 {
-  DECLARE_SMOBS (Score);
-
+public:
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Score ();
+private:
   SCM music_;
   SCM input_location_;
   SCM header_;
@@ -53,7 +56,6 @@ public:
   void set_header (SCM module);
 };
 
-DECLARE_UNSMOB (Score, score);
 
 SCM ly_run_translator (SCM, SCM);
 

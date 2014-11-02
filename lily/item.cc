@@ -223,12 +223,6 @@ Item::derived_mark () const
     scm_gc_mark (broken_to_drul_[RIGHT]->self_scm ());
 }
 
-Item *
-unsmob_item (SCM s)
-{
-  return dynamic_cast<Item *> (unsmob_grob (s));
-}
-
 Interval
 Item::pure_height (Grob *g, int start, int end)
 {
@@ -236,7 +230,6 @@ Item::pure_height (Grob *g, int start, int end)
     return cached_pure_height_ + pure_relative_y_coordinate (g, start, end);
   /* Note: cached_pure_height_ does not notice if start changes, implicitly
      assuming that Items' pure_heights do not depend on 'start' or 'end'.
-     Accidental_interface::pure_height(), however, does depend on 'start'.
   */
 
   cache_pure_height (Grob::pure_height (this, start, end));

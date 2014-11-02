@@ -47,6 +47,12 @@ public:
   Moment get_length () const;
   Moment start_mom () const;
   void print () const;
+  static Music *unsmob (SCM m) {
+    return dynamic_cast <Music *> (Prob::unsmob (m));
+  }
+  static bool is_smob (SCM m) {
+    return Prob::is_smob (m) && unsmob (m);
+  }
 
   /// Transpose, with the interval central C to #p#
   void transpose (Pitch p);
@@ -69,7 +75,6 @@ protected:
   friend SCM ly_extended_make_music (SCM, SCM);
 };
 
-Music *unsmob_music (SCM);
 Music *make_music_by_name (SCM sym);
 SCM ly_music_deep_copy (SCM);
 SCM ly_camel_case_2_lisp_identifier (SCM name_sym);

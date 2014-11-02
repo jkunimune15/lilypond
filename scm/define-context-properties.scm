@@ -63,7 +63,10 @@ suffixes.  No setting will not go back in measure-number time.")
      (alternativeRestores ,symbol-list? "Timing variables that are
 restored to their value at the end of the first alternative in
 subsequent alternatives.")
-     (associatedVoice ,string? "Name of the @code{Voice} that has the
+     (associatedVoice ,string? "Name of the context (see
+@code{associatedVoiceType} for its type, usually @code{Voice}) that
+has the melody for this @code{Lyrics} line.")
+     (associatedVoiceType ,symbol? "Type of the context that has the
 melody for this @code{Lyrics} line.")
      (autoAccidentals ,list? "List of different ways to typeset an
 accidental.
@@ -282,8 +285,8 @@ slurred note, one above and one below the chord.")
 instruments (symbols) to pitches.")
      (drumStyleTable ,hash-table? "A hash table which maps drums to
 layout settings.  Predefined values: @samp{drums-style},
-@samp{timbales-style}, @samp{congas-style}, @samp{bongos-style}, and
-@samp{percussion-style}.
+@samp{agostini-drums-style}, @samp{timbales-style}, @samp{congas-style},
+@samp{bongos-style}, and @samp{percussion-style}.
 
 The layout style is a hash table, containing the drum-pitches (e.g.,
 the symbol @samp{hihat}) as keys, and a list
@@ -396,12 +399,12 @@ alterations should be printed.  The format is
 @code{(@var{step} . @var{alter})},
 where @var{step} is a number from 0 to@tie{}6 and
 @var{alter} from -2 (sharp) to 2 (flat).")
-     (keySignature ,list? "The current key signature.  This is an alist
+     (keyAlterations ,list? "The current key signature.  This is an alist
 containing @code{(@var{step} . @var{alter})} or
 @code{((@var{octave} . @var{step}) . @var{alter})}, where @var{step}
 is a number in the range 0 to@tie{}6 and @var{alter} a fraction,
 denoting alteration.  For alterations, use symbols, e.g.
-@code{keySignature = #`((6 . ,FLAT))}.")
+@code{keyAlterations = #`((6 . ,FLAT))}.")
 
 
      (lyricMelismaAlignment ,number? "Alignment to use for a melisma syllable.")
@@ -458,6 +461,9 @@ associated with the current context.  Ranges from@tie{}@w{-1} to@tie{}1,
 where the values@tie{}@w{-1} (@code{#LEFT}),@tie{}0 (@code{#CENTER})
 and@tie{}1 (@code{#RIGHT}) correspond to hard left, center, and hard
 right, respectively.")
+     (midiExpression ,number? "Expression control for the MIDI
+channel associated with the current context.  Ranges from 0
+to@tie{}1 (0=off,@tie{}1=full effect).")
      (midiReverbLevel ,number? "Reverb effect level for the MIDI
 channel associated with the current context.  Ranges from 0
 to@tie{}1 (0=off,@tie{}1=full effect).")
@@ -562,6 +568,8 @@ part-combining.")
 @rinternals{Pitch_squash_engraver}.")
      (staffLineLayoutFunction ,procedure? "Layout of staff lines,
 @code{traditional}, or @code{semitone}.")
+     (magnifyStaffValue ,positive? "The most recent value set with
+@code{\\magnifyStaff}.")
      (stanza ,markup? "Stanza @q{number} to print before the start of a
 verse.  Use in @code{Lyrics} context.")
      (startRepeatSegnoType ,string? "Set the default bar line for the
@@ -710,10 +718,10 @@ in an axis group.")
 
 
      (lastChord ,markup? "Last chord, used for detecting chord changes.")
-     (lastKeySignature ,list? "Last key signature before a key
+     (lastKeyAlterations ,list? "Last key signature before a key
 signature change.")
-     (localKeySignature ,list? "The key signature at this point in the
-measure.  The format is the same as for @code{keySignature}, but can
+     (localAlterations ,list? "The key signature at this point in the
+measure.  The format is the same as for @code{keyAlterations}, but can
 also contain @code{((@var{octave} . @var{name}) . (@var{alter}
 @var{barnumber} . @var{measureposition}))} pairs.")
 
@@ -721,6 +729,9 @@ also contain @code{((@var{octave} . @var{name}) . (@var{alter}
      (melismaBusy ,boolean? "Signifies whether a melisma is active.
 This can be used to signal melismas on top of those automatically
 detected.")
+
+
+     (partialBusy ,boolean? "Signal that \\partial acts at the current timestep.")
 
 
      (quotedCueEventTypes ,list? "A list of symbols, representing the

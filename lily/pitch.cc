@@ -24,7 +24,6 @@
 #include "string-convert.hh"
 #include "warn.hh"
 
-#include "ly-smobs.icc"
 #include <cmath>
 
 Pitch::Pitch (int o, int n, Rational a)
@@ -219,21 +218,19 @@ Pitch::down_to (int notename)
   notename_ = notename;
 }
 
-IMPLEMENT_TYPE_P (Pitch, "ly:pitch?");
+const char Pitch::type_p_name_[] = "ly:pitch?";
+
 SCM
-Pitch::mark_smob (SCM x)
+Pitch::mark_smob ()
 {
-  Pitch *p = (Pitch *) SCM_CELL_WORD_1 (x);
-  return p->scale_->self_scm ();
+  return scale_->self_scm ();
 }
 
-IMPLEMENT_SIMPLE_SMOBS (Pitch);
 int
-Pitch::print_smob (SCM s, SCM port, scm_print_state *)
+Pitch::print_smob (SCM port, scm_print_state *)
 {
-  Pitch *r = (Pitch *) SCM_CELL_WORD_1 (s);
   scm_puts ("#<Pitch ", port);
-  scm_display (ly_string2scm (r->to_string ()), port);
+  scm_display (ly_string2scm (to_string ()), port);
   scm_puts (" >", port);
   return 1;
 }
@@ -255,8 +252,8 @@ MAKE_SCHEME_CALLBACK (Pitch, less_p, 2);
 SCM
 Pitch::less_p (SCM p1, SCM p2)
 {
-  Pitch *a = unsmob_pitch (p1);
-  Pitch *b = unsmob_pitch (p2);
+  Pitch *a = Pitch::unsmob (p1);
+  Pitch *b = Pitch::unsmob (p2);
 
   if (compare (*a, *b) < 0)
     return SCM_BOOL_T;

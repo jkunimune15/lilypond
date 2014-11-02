@@ -73,7 +73,7 @@ Percent_repeat_engraver::start_translation_timestep ()
   if (now_mom ().main_part_ != command_moment_.main_part_)
     {
       first_command_column_
-        = unsmob_grob (get_property ("currentCommandColumn"));
+        = Grob::unsmob (get_property ("currentCommandColumn"));
       command_moment_ = now_mom ();
     }
 
@@ -133,6 +133,7 @@ Percent_repeat_engraver::process_music ()
           percent_counter_->set_bound (LEFT, col);
           Side_position_interface::add_support (percent_counter_, percent_);
           percent_counter_->set_parent (percent_, Y_AXIS);
+          percent_counter_->set_parent (percent_, X_AXIS);
         }
       else
         percent_counter_ = 0;

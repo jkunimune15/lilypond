@@ -16,27 +16,30 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LilyPond.  If not, see <http://www.gnu.org/licenses/>.
 
-(define (sort-grob-properties x)
+(define (sort-grob-properties props)
   ;; force 'meta to the end of each prop-list
-  (let ((meta (assoc 'meta x)))
-    (append (sort (assoc-remove! x 'meta) ly:alist-ci<?)
+  (let ((meta (assoc 'meta props)))
+    (append (sort (assoc-remove! props 'meta) ly:alist-ci<?)
             (list meta))))
 
-;; properly sort all grobs, properties, and interfaces
+;; properly sort all properties and interfaces
 ;; within the all-grob-descriptions alist
-(for-each
- (lambda (x)
-   (let* ((props      (assoc-ref all-grob-descriptions (car x)))
-          (meta       (assoc-ref props 'meta))
-          (interfaces (assoc-ref meta 'interfaces)))
-     (set! all-grob-descriptions
-           (sort (assoc-set! all-grob-descriptions (car x)
-                             (sort-grob-properties
-                              (assoc-set! props 'meta
-                                          (assoc-set! meta 'interfaces
-                                                      (sort interfaces ly:symbol-ci<?)))))
-                 ly:alist-ci<?))))
- all-grob-descriptions)
+(set! all-grob-descriptions
+  (map!
+    (lambda (grob-description)
+      (let* ((grob-key      (car grob-description))
+             (props         (assoc-ref all-grob-descriptions grob-key))
+             (meta          (assoc-ref props 'meta))
+             (interfaces    (assoc-ref meta 'interfaces))
+             (sorted-ifaces (sort interfaces ly:symbol-ci<?))
+             (new-meta      (assoc-set! meta 'interfaces sorted-ifaces))
+             (new-props     (assoc-set! props 'meta new-meta))
+             (sorted-props  (sort-grob-properties new-props)))
+        (cons grob-key sorted-props)))
+    all-grob-descriptions))
+
+;; sort all grobs in the all-grob-descriptions alist
+(set! all-grob-descriptions (sort all-grob-descriptions ly:alist-ci<?))
 
 (define (interface-doc-string interface grob-description)
   (let* ((name (car interface))
@@ -154,7 +157,7 @@ node."
             engraver-list))
        "."
 
-       "\n\nStandard settings:\n\n"
+       "\n\nStandard settings:\n"
        (grob-alist->texi description)
        "\n\nThis object supports the following interface(s):\n"
        (human-listify ifacedoc)
@@ -173,6 +176,16 @@ node."
      (cons (cons key val)  prior))
    '() (ly:all-grob-interfaces)))
 
+;; sort user-settable and internal props within each grob-interface
+(set! interface-description-alist
+  (map! (lambda (iface-desc)
+          (let* ((key-name-docstr (list-head iface-desc 3))
+                 (props           (list-tail iface-desc 3))
+                 (sorted-props    (list (sort (car props) ly:symbol-ci<?))))
+            (append key-name-docstr sorted-props)))
+        interface-description-alist))
+
+;; sort list of grob interfaces
 (set! interface-description-alist
       (sort interface-description-alist ly:alist-ci<?))
 

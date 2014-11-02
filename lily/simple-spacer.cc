@@ -380,7 +380,7 @@ get_column_description (vector<Grob *> const &cols, vsize col_index, bool line_s
   for (SCM s = Spaceable_grob::get_minimum_distances (col);
        scm_is_pair (s); s = scm_cdr (s))
     {
-      Grob *other = unsmob_grob (scm_caar (s));
+      Grob *other = Grob::unsmob (scm_caar (s));
       vsize j = binary_search (cols, other, Paper_column::less_than, col_index);
       if (j != VPOS)
         {
@@ -534,22 +534,3 @@ get_line_configuration (vector<Grob *> const &columns,
 
   return ret;
 }
-
-#include "ly-smobs.icc"
-
-IMPLEMENT_SIMPLE_SMOBS (Simple_spacer);
-IMPLEMENT_DEFAULT_EQUAL_P (Simple_spacer);
-
-SCM
-Simple_spacer::mark_smob (SCM /* x */)
-{
-  return SCM_EOL;
-}
-
-int
-Simple_spacer::print_smob (SCM /* x */, SCM p, scm_print_state *)
-{
-  scm_puts ("#<Simple spacer>", p);
-  return 1;
-}
-

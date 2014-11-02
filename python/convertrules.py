@@ -2846,7 +2846,7 @@ def conv(str):
     if re.search("(Slur|Tie)\w+#\'dash-fraction", str) \
         or re.search("(Slur|Tie)\w+#\'dash-period", str):
         stderr_write (NOT_SMART % "dash-fraction, dash-period")
-        stderr_write (_ ("Dash parameters for slurs and ties are now in \'dash-details.\n"))
+        stderr_write (_ ("Dash parameters for slurs and ties are now in \'dash-definition.\n"))
         stderr_write (UPDATE_MANUALLY)
     return str
 
@@ -3450,7 +3450,7 @@ def conv (str):
         if m.group (1):
             return m.group (0)
         x = m.group (2) + m.group (4)
-        
+
         if m.group (3):
             x = x + re.sub (r"(\s*)(" + symbol_list + ")", fn_path_replace,
                             m.group (3))
@@ -3709,6 +3709,18 @@ def conv (str):
     str = re.sub (r"(\\lyricsto\s*" + word + r"\s*)\\lyrics\b\s*",
                   r"\\new Lyrics \1", str)
     str = re.sub (r'\\lyricmode\s*(\\lyricsto\b)', r"\1", str)
+    return str
+
+@rule ((2, 19, 7), "keySignature -> keyAlterations")
+def conv(str):
+    str = re.sub (r'\bkeySignature\b', 'keyAlterations', str)
+    str = re.sub (r'\blastKeySignature\b', 'lastKeyAlterations', str)
+    str = re.sub (r'\blocalKeySignature\b', 'localAlterations', str)
+    return str
+
+@rule ((2, 19, 11), "thin-kern -> segno-kern")
+def conv(str):
+    str = re.sub (r'\bthin-kern\b', 'segno-kern', str)
     return str
 
 # Guidelines to write rules (please keep this at the end of this file)

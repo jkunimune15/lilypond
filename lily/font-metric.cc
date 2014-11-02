@@ -29,7 +29,6 @@ using namespace std;
 #include "stencil.hh"
 #include "warn.hh"
 
-#include "ly-smobs.icc"
 
 Real
 Font_metric::design_size () const
@@ -60,11 +59,11 @@ Font_metric::find_by_name (string s) const
 Font_metric::Font_metric ()
 {
   description_ = SCM_EOL;
-  self_scm_ = SCM_EOL;
   smobify_self ();
 }
 
 Font_metric::Font_metric (Font_metric const &)
+  : Smob<Font_metric> ()
 {
 }
 
@@ -96,28 +95,24 @@ Font_metric::derived_mark () const
 }
 
 SCM
-Font_metric::mark_smob (SCM s)
+Font_metric::mark_smob ()
 {
-  Font_metric *m = (Font_metric *) SCM_CELL_WORD_1 (s);
-  m->derived_mark ();
-  return m->description_;
+  derived_mark ();
+  return description_;
 }
 
 int
-Font_metric::print_smob (SCM s, SCM port, scm_print_state *)
+Font_metric::print_smob (SCM port, scm_print_state *)
 {
-  Font_metric *m = unsmob_metrics (s);
   scm_puts ("#<", port);
-  scm_puts (m->class_name (), port);
+  scm_puts (class_name (), port);
   scm_puts (" ", port);
-  scm_write (m->description_, port);
+  scm_write (description_, port);
   scm_puts (">", port);
   return 1;
 }
 
-IMPLEMENT_SMOBS (Font_metric);
-IMPLEMENT_DEFAULT_EQUAL_P (Font_metric);
-IMPLEMENT_TYPE_P (Font_metric, "ly:font-metric?");
+const char Font_metric::type_p_name_[] = "ly:font-metric?";
 
 SCM
 Font_metric::font_file_name () const

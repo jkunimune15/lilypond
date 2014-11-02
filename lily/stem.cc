@@ -123,7 +123,7 @@ Stem::set_stem_positions (Grob *me, Real se)
   // todo: margins
   Direction d = get_grob_direction (me);
 
-  Grob *beam = unsmob_grob (me->get_object ("beam"));
+  Grob *beam = Grob::unsmob (me->get_object ("beam"));
   if (d && d * head_positions (me)[get_grob_direction (me)] >= se * d)
     me->warning (_ ("weird stem size, check for narrow beams"));
 
@@ -298,7 +298,7 @@ Stem::pure_height (SCM smob,
                    SCM /* start */,
                    SCM /* end */)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   return ly_interval2scm (internal_pure_height (me, true));
 }
 
@@ -308,7 +308,7 @@ Stem::internal_pure_height (Grob *me, bool calc_beam)
   if (!is_normal_stem (me))
     return Interval (0.0, 0.0);
 
-  Grob *beam = unsmob_grob (me->get_object ("beam"));
+  Grob *beam = Grob::unsmob (me->get_object ("beam"));
 
   Interval iv = internal_height (me, false);
 
@@ -378,7 +378,7 @@ MAKE_SCHEME_CALLBACK (Stem, calc_stem_end_position, 1)
 SCM
 Stem::calc_stem_end_position (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   return scm_from_double (internal_calc_stem_end_position (me, true));
 }
 
@@ -388,7 +388,7 @@ Stem::pure_calc_stem_end_position (SCM smob,
                                    SCM, /* start */
                                    SCM /* end */)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   return scm_from_double (internal_calc_stem_end_position (me, false));
 }
 
@@ -455,8 +455,8 @@ Stem::internal_calc_stem_end_position (Grob *me, bool calc_beam)
   length *= robust_scm2double (me->get_property ("length-fraction"), 1.0);
 
   /* Tremolo stuff.  */
-  Grob *t_flag = unsmob_grob (me->get_object ("tremolo-flag"));
-  if (t_flag && (!unsmob_grob (me->get_object ("beam")) || !calc_beam))
+  Grob *t_flag = Grob::unsmob (me->get_object ("tremolo-flag"));
+  if (t_flag && (!Grob::is_smob (me->get_object ("beam")) || !calc_beam))
     {
       /* Crude hack: add extra space if tremolo flag is there.
 
@@ -506,7 +506,7 @@ MAKE_SCHEME_CALLBACK (Stem, calc_positioning_done, 1);
 SCM
 Stem::calc_positioning_done (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   if (!head_count (me))
     return SCM_BOOL_T;
 
@@ -575,14 +575,32 @@ Stem::calc_positioning_done (SCM smob)
                 stem 100% whereas reversed heads only overlaps the
                 stem 50%
               */
-
               Real reverse_overlap = 0.5;
-              heads[i]->translate_axis ((ell - thick * reverse_overlap) * d,
-                                        X_AXIS);
+
+              /*
+                However, the first reverse head has to be shifted even
+                more than the full reverse overlap if it is the same
+                height as the first head or there will be a gap
+                because of the head slant (issue 346).
+              */
+
+              if (i == 1 && dy < 0.1)
+                reverse_overlap = 1.1;
 
               if (is_invisible (me))
-                heads[i]->translate_axis (-thick * (2 - reverse_overlap) * d,
-                                          X_AXIS);
+                {
+                  // Semibreves and longer are tucked in considerably
+                  // to be recognizable as chorded rather than
+                  // parallel voices.  During the course of issue 346
+                  // there was a discussion to change this for unisons
+                  // (dy < 0.1) to reduce overlap but without reaching
+                  // agreement and with Gould being rather on the
+                  // overlapping front.
+                  reverse_overlap = 2;
+                }
+
+              heads[i]->translate_axis ((ell - thick * reverse_overlap) * d,
+                                        X_AXIS);
 
               /* TODO:
 
@@ -613,9 +631,9 @@ MAKE_SCHEME_CALLBACK (Stem, calc_direction, 1);
 SCM
 Stem::calc_direction (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   Direction dir = CENTER;
-  if (Grob *beam = unsmob_grob (me->get_object ("beam")))
+  if (Grob *beam = Grob::unsmob (me->get_object ("beam")))
     {
       SCM ignore_me = beam->get_property ("direction");
       (void) ignore_me;
@@ -636,7 +654,7 @@ MAKE_SCHEME_CALLBACK (Stem, calc_default_direction, 1);
 SCM
 Stem::calc_default_direction (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
 
   Direction dir = CENTER;
   int staff_center = 0;
@@ -658,7 +676,7 @@ MAKE_SCHEME_CALLBACK (Stem, height, 1);
 SCM
 Stem::height (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   return ly_interval2scm (internal_height (me, true));
 }
 
@@ -673,7 +691,7 @@ Stem::get_reference_head (Grob *me)
 Real
 Stem::beam_end_corrective (Grob *me)
 {
-  Grob *beam = unsmob_grob (me->get_object ("beam"));
+  Grob *beam = Grob::unsmob (me->get_object ("beam"));
   Direction dir = get_grob_direction (me);
   if (beam)
     {
@@ -706,7 +724,7 @@ Stem::internal_height (Grob *me, bool calc_beam)
     If there is a beam but no stem, slope calculations depend on this
     routine to return where the stem end /would/ be.
   */
-  if (calc_beam && !beam && !unsmob_stencil (me->get_property ("stencil")))
+  if (calc_beam && !beam && !Stencil::is_smob (me->get_property ("stencil")))
     return Interval ();
 
   Real y1 = robust_scm2double ((calc_beam
@@ -731,7 +749,7 @@ MAKE_SCHEME_CALLBACK (Stem, width, 1);
 SCM
 Stem::width (SCM e)
 {
-  Grob *me = unsmob_grob (e);
+  Grob *me = Grob::unsmob (e);
 
   Interval r;
 
@@ -757,7 +775,7 @@ MAKE_SCHEME_CALLBACK (Stem, calc_stem_begin_position, 1);
 SCM
 Stem::calc_stem_begin_position (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   return scm_from_double (internal_calc_stem_begin_position (me, true));
 }
 
@@ -767,7 +785,7 @@ Stem::pure_calc_stem_begin_position (SCM smob,
                                      SCM, /* start */
                                      SCM /* end */)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   return scm_from_double (internal_calc_stem_begin_position (me, false));
 }
 
@@ -808,7 +826,7 @@ MAKE_SCHEME_CALLBACK (Stem, pure_calc_length, 3);
 SCM
 Stem::pure_calc_length (SCM smob, SCM /*start*/, SCM /*end*/)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   Real beg = robust_scm2double (me->get_pure_property ("stem-begin-position", 0, INT_MAX), 0.0);
   Real res = fabs (internal_calc_stem_end_position (me, false) - beg);
   return scm_from_double (res);
@@ -818,8 +836,8 @@ MAKE_SCHEME_CALLBACK (Stem, calc_length, 1);
 SCM
 Stem::calc_length (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
-  if (unsmob_grob (me->get_object ("beam")))
+  Grob *me = Grob::unsmob (smob);
+  if (Grob::is_smob (me->get_object ("beam")))
     {
       me->programming_error ("ly:stem::calc-length called but will not be used for beamed stem.");
       return scm_from_double (0.0);
@@ -835,8 +853,10 @@ Stem::is_valid_stem (Grob *me)
 {
   /* TODO: make the stem start a direction ?
      This is required to avoid stems passing in tablature chords.  */
+  if (!me)
+    return false;
   Grob *lh = get_reference_head (me);
-  Grob *beam = unsmob_grob (me->get_object ("beam"));
+  Grob *beam = Grob::unsmob (me->get_object ("beam"));
 
   if (!lh && !beam)
     return false;
@@ -851,7 +871,7 @@ MAKE_SCHEME_CALLBACK (Stem, print, 1);
 SCM
 Stem::print (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   if (!is_valid_stem (me))
     return SCM_EOL;
 
@@ -887,7 +907,7 @@ MAKE_SCHEME_CALLBACK (Stem, offset_callback, 1);
 SCM
 Stem::offset_callback (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
 
   extract_grob_set (me, "rests", rests);
   if (rests.size ())
@@ -931,7 +951,7 @@ Spanner *
 Stem::get_beam (Grob *me)
 {
   SCM b = me->get_object ("beam");
-  return dynamic_cast<Spanner *> (unsmob_grob (b));
+  return dynamic_cast<Spanner *> (Grob::unsmob (b));
 }
 
 Stem_info
@@ -950,7 +970,7 @@ MAKE_SCHEME_CALLBACK (Stem, calc_stem_info, 1);
 SCM
 Stem::calc_stem_info (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   Direction my_dir = get_grob_direction (me);
 
   if (!my_dir)
@@ -1000,7 +1020,7 @@ Stem::calc_stem_info (SCM smob)
        : 0.0);
 
   Real height_of_my_trem = 0.0;
-  Grob *trem = unsmob_grob (me->get_object ("tremolo-flag"));
+  Grob *trem = Grob::unsmob (me->get_object ("tremolo-flag"));
   if (trem)
     {
       height_of_my_trem
@@ -1099,7 +1119,7 @@ Stem::beam_multiplicity (Grob *stem)
 bool
 Stem::is_cross_staff (Grob *stem)
 {
-  Grob *beam = unsmob_grob (stem->get_object ("beam"));
+  Grob *beam = Grob::unsmob (stem->get_object ("beam"));
   return beam && Beam::is_cross_staff (beam);
 }
 
@@ -1107,13 +1127,13 @@ MAKE_SCHEME_CALLBACK (Stem, calc_cross_staff, 1)
 SCM
 Stem::calc_cross_staff (SCM smob)
 {
-  return scm_from_bool (is_cross_staff (unsmob_grob (smob)));
+  return scm_from_bool (is_cross_staff (Grob::unsmob (smob)));
 }
 
 Grob *
 Stem::flag (Grob *me)
 {
-  return unsmob_grob (me->get_object ("flag"));
+  return Grob::unsmob (me->get_object ("flag"));
 }
 
 /* FIXME:  Too many properties  */
@@ -1152,6 +1172,7 @@ ADD_INTERFACE (Stem,
                "default-direction "
                "details "
                "direction "
+               "double-stem-separation "
                "duration-log "
                "flag "
                "french-beaming "

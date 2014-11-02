@@ -125,43 +125,47 @@ visibility of the tuplet bracket.  Setting it to false prevents
 printing of the bracket.  Setting the property to @code{if-no-beam}
 makes it print only if there is no beam associated with this tuplet
 bracket.")
-     (break-align-anchor ,number? "Grobs aligned to this break-align
-grob will have their X-offsets shifted by this number.  In bar lines,
+     (break-align-anchor ,number? "Grobs aligned to this breakable
+item will have their X-offsets shifted by this number.  In bar lines,
 for example, this is used to position grobs relative to the (visual)
 center of the bar line.")
      (break-align-anchor-alignment ,number? "Read by
 @code{ly:break-aligned-interface::calc-extent-aligned-anchor} for
 aligning an anchor to a grob's extent.")
-     (break-align-orders ,vector? "Defines the order in which
-prefatory matter (clefs, key signatures) appears.  The format is a
-vector of length@tie{}3, where each element is one order for
-end-of-line, middle of line, and start-of-line, respectively.  An
-order is a list of symbols.
+     (break-align-orders ,vector? "This is a vector of 3@tie{}lists:
+@w{@code{#(@var{end-of-line} @var{unbroken} @var{start-of-line}}}).
+Each list contains @w{@emph{break-align symbols}} that specify an
+order of breakable items (see @rinternals{break-alignment-interface}).
 
-For example, clefs are put after key signatures by setting
+For example, this places time signatures before clefs:
 
 @example
-\\override Score.BreakAlignment #'break-align-orders =
-  #(make-vector 3 '(span-bar
+\\override Score.BreakAlignment.break-align-orders =
+  #(make-vector 3 '(left-edge
+                    cue-end-clef
+                    ambitus
                     breathing-sign
-                    staff-bar
-                    key
+                    time-signature
                     clef
-                    time-signature))
+                    cue-clef
+                    staff-bar
+                    key-cancellation
+                    key-signature
+                    custos))
 @end example")
-     (break-align-symbol ,symbol? "This key is used for aligning and
-spacing breakable items.")
-     (break-align-symbols ,list? "A list of symbols that determine
-which break-aligned grobs to align this to.  If the grob selected by
-the first symbol in the list is invisible due to break-visibility, we
-will align to the next grob (and so on).  Choices are @code{left-edge},
-@code{ambitus}, @code{breathing-sign}, @code{clef}, @code{staff-bar},
-@code{key-cancellation}, @code{key-signature}, @code{time-signature},
-and @code{custos}.")
+     (break-align-symbol ,symbol? "This key is used for aligning,
+ordering, and spacing breakable items.  See
+@rinternals{break-alignment-interface}.")
+     (break-align-symbols ,list? "A list of
+@w{@emph{break-align symbols}} that determines which breakable
+items to align this to.  If the grob selected by the first symbol
+in the list is invisible due to @w{@code{break-visibility}}, we
+will align to the next grob (and so on).  Choices are listed in
+@rinternals{break-alignment-interface}.")
      (break-overshoot ,number-pair? "How much does a broken spanner
 stick out of its bounds?")
      (break-visibility ,vector? "A vector of 3@tie{}booleans,
-@code{#(@var{end-of-line} @var{unbroken} @var{begin-of-line})}.
+@w{@code{#(@var{end-of-line} @var{unbroken} @var{begin-of-line})}}.
 @code{#t} means visible, @code{#f} means killed.")
      (breakable ,boolean? "Allow breaks here.")
      (broken-bound-padding ,number? "The amount of padding to insert
@@ -175,6 +179,8 @@ on each chord to the height of the chord plus
 @code{chord-dots-limit} staff-positions.")
      (circled-tip ,boolean? "Put a circle at start/@/end of
 hairpins (al/@/del niente).")
+     (clef-alignments ,list? "An alist of parent-alignments
+that should be used for clef modifiers with various clefs")
      (clip-edges ,boolean? "Allow outward pointing beamlets at the
 edges of beams?")
      (collapse-height ,ly:dimension? "Minimum height of system start
@@ -239,6 +245,11 @@ elements closer together.")
      (dot-placement-list ,list? "List consisting of
 @code{(@var{description} @var{string-number} @var{fret-number}
 @var{finger-number})} entries used to define fret diagrams.")
+     (double-stem-separation ,number? "The distance between the two
+stems of a half note in tablature when using @code{\\tabFullNotation},
+not counting the width of the stems themselves, expressed as a multiple
+of the default height of a staff-space in the traditional five-line
+staff.")
      (duration-log ,integer? "The 2-log of the note head duration,
 i.e., @code{0} = whole note, @code{1} = half note, etc.")
 
@@ -312,7 +323,9 @@ include @code{upright}, @code{italic}, @code{caps}.")
 @q{normal}@tie{}size.  @code{0}@tie{}is style-sheet's normal size,
 @w{@code{-1}} is smaller, @code{+1} is bigger.  Each step of@tie{}1 is
 approximately 12% larger; 6@tie{}steps are exactly a factor@tie{}2
-larger.  Fractional values are allowed.")
+larger.  If the context property @code{fontSize} is set, its value is
+added to this before the glyph is printed.  Fractional values are
+allowed.")
      (footnote ,boolean? "Should this be a footnote or in-note?")
      (footnote-music ,ly:music? "Music creating a footnote.")
      (footnote-text ,markup? "A footnote for the grob.")
@@ -368,6 +381,13 @@ label the lowest fret number.  Default@tie{}0.5.
 @code{fret-label-vertical-offset} -- The offset of the fret label from
 the center of the fret in direction parallel to strings.
 Default@tie{}0.
+@item
+@code{fret-label-horizontal-offset} -- The offset of the fret label from
+the center of the fret in direction orthogonal to strings.
+Default@tie{}0.
+@item
+@code{paren-padding} -- The padding for the parenthesis.
+Default@tie{}0.05.
 @item
 @code{label-dir} -- Side to which the fret label is attached.
 @w{@code{-1}}, @code{LEFT}, or @code{DOWN} for left or down; @code{1},
@@ -449,7 +469,9 @@ etc. are already taken.")
 ;;; h
 ;;;
      (hair-thickness ,number? "Thickness of the thin line in a bar
-line.")
+line, expressed as a multiple of the default staff-line
+thickness (i.e. the visual output is @emph{not} influenced by changes
+to @code{@var{Staff}.StaffSymbol.thickness}).")
      (harp-pedal-details ,list? "An alist of detailed grob properties
 for harp pedal diagrams.  Each alist entry consists of a
 @code{(@var{property} . @var{value})} pair.  The properties which can
@@ -522,8 +544,11 @@ slur quants to this position, and print the respective scores.")
 ;;;
      (keep-inside-line ,boolean? "If set, this column cannot have
 objects sticking into the margin.")
-     (kern ,ly:dimension? "Amount of extra white space to add.  For
-bar lines, this is the amount of space after a thick line.")
+     (kern ,ly:dimension? "The space between individual elements
+in any compound bar line, expressed as a multiple of the default
+staff-line thickness (i.e. the visual output is @emph{not}
+influenced by changes to
+@code{@var{Staff}.StaffSymbol.thickness}).")
      (knee ,boolean? "Is this beam kneed?")
      (knee-spacing-correction ,number? "Factor for the optical
 correction amount for kneed beams.  Set between @code{0} for no
@@ -568,8 +593,12 @@ whether to put a line break at this column.  Can be @code{force} or
 if this column is the start of a system.")
      (line-count ,integer? "The number of staff lines.")
      (line-positions ,list? "Vertical positions of staff lines.")
-     (line-thickness ,number? "The thickness of the tie or slur
-contour.")
+     (line-thickness ,number? "For slurs and ties, this is the
+diameter of the virtual @qq{pen} that draws the two arcs of the
+curve's outline, which intersect at the endpoints.  This property is
+expressed as a multiple of the current staff-line thickness (i.e. the
+visual output is influenced by changes to
+@code{@var{Staff}.StaffSymbol.thickness}).")
      (long-text ,markup? "Text markup.  See @ruser{Formatting text}.")
 
 
@@ -669,6 +698,8 @@ over the total spanner, where the width of the spanner is normalized
 between 0 and 1.")
      (note-names ,vector? "Vector of strings containing names for
 easy-notation note heads.")
+     (number-type ,symbol? "Numbering style. Choices include
+@code{roman-lower}, @code{roman-upper} and @code{arabic}.")
 
 
 ;;;
@@ -729,6 +760,15 @@ at a column with a negative penalty.")
      (page-turn-permission ,symbol? "Instructs the page breaker on
 whether to put a page turn at this column.  Can be @code{force} or
 @code{allow}.")
+     (parent-alignment-X ,number? "Specify on which point
+of the parent the object is aligned. The value @w{@code{-1}} means
+aligned on parent's left edge, @code{0}@tie{}on@tie{}center, and
+@code{1}@tie{}right edge, in X@tie{}direction.  Other numerical
+values may also be specified - the unit is half the parent's width.
+If unset, the value from @code{self-alignment-X} property will be
+used.")
+     (parent-alignment-Y ,number? "Like @code{parent-alignment-X}
+but for the Y@tie{}axis.")
      (parenthesized ,boolean? "Parenthesize this grob.")
      (positions ,number-pair? "Pair of staff coordinates
 @code{(@var{left} . @var{right})}, where both @var{left} and
@@ -750,6 +790,12 @@ number, the quicker the slur attains its @code{height-limit}.")
 interesting items.")
      (remove-first ,boolean? "Remove the first staff of an orchestral
 score?")
+     (remove-layer ,integer? "The @code{Keep_alive_together_engraver}
+removes all @code{VerticalAxisGroup} grobs with a @code{remove-layer}
+larger than the smallest retained @code{remove-layer}.  Set to
+@code{#f} to make a layer invisible to the
+@code{Keep_alive_together_engraver}, set to @code{'()} to have it not
+participate in the layering decisions.")
      (replacement-alist ,list? "Alist of strings.
 The key is a string of the pattern to be replaced.  The value is a
 string of what should be displayed.  Useful for ligatures.")
@@ -782,10 +828,15 @@ stem distance.")
 scripts in a stack, by being added to the position of the script in
 the user input, the sum being the overall priority.  Smaller means
 closer to the head.")
+     (segno-kern ,number? "The space between the two thin lines
+of the segno bar line symbol, expressed as a multiple of the
+default staff-line thickness (i.e. the visual output is @emph{not}
+influenced by changes to
+@code{@var{Staff}.StaffSymbol.thickness}).")
      (self-alignment-X ,number? "Specify alignment of an object.  The
 value @w{@code{-1}} means left aligned, @code{0}@tie{}centered, and
 @code{1}@tie{}right-aligned in X@tie{}direction.  Other numerical
-values may also be specified.")
+values may also be specified - the unit is half the object width.")
      (self-alignment-Y ,number? "Like @code{self-alignment-X} but for
 the Y@tie{}axis.")
      (sharp-positions ,list? "Sharps in key signatures are placed
@@ -834,11 +885,69 @@ elements closer together.")
      (slur-padding ,number? "Extra distance between slur and script.")
      (snap-radius ,number? "The maximum distance between two objects that
 will cause them to snap to alignment along an axis.")
-     (space-alist ,list? "A table that specifies distances between
-prefatory items, like clef and time-signature.  The format is an alist
-of spacing tuples: @code{(@var{break-align-symbol} @var{type}
-. @var{distance})}, where @var{type} can be the symbols
-@code{minimum-space} or @code{extra-space}.")
+     (space-alist ,list? "An alist that specifies distances from this
+grob to other breakable items, using the format:
+
+@example
+'((@var{break-align-symbol} . (@var{spacing-style} . @var{space}))
+  (@var{break-align-symbol} . (@var{spacing-style} . @var{space}))
+  ...)
+@end example
+
+Standard choices for @w{@code{@var{break-align-symbol}}} are listed in
+@rinternals{break-alignment-interface}.  Additionally, three special
+@w{break-align} symbols available to @w{@code{space-alist}} are:
+
+@quotation
+@table @code
+@item first-note
+used when the grob is just left of the first note on a line
+
+@item next-note
+used when the grob is just left of any other note
+
+@item right-edge
+used when the grob is the last item on the line (only compatible with
+the @w{@code{extra-space}} spacing style)
+@end table
+@end quotation
+
+Choices for @code{@var{spacing-style}} are:
+
+@quotation
+@table @code
+@item extra-space
+Put this much space between the two grobs.  The space is stretchable
+when paired with @w{@code{first-note}} or @w{@code{next-note}};
+otherwise it is fixed.
+
+@item minimum-space
+Put at least this much space between the left sides of both grobs,
+without allowing them to collide.  The space is stretchable when paired
+with @w{@code{first-note}} or @w{@code{next-note}}; otherwise it
+is fixed.  Not compatible with @w{@code{right-edge}}.
+
+@item fixed-space
+Only compatible with @w{@code{first-note}} and
+@w{@code{next-note}}.  Put this much fixed space between the grob
+and the note.
+
+@item minimum-fixed-space
+Only compatible with @w{@code{first-note}} and
+@w{@code{next-note}}.  Put at least this much fixed space between
+the left side of the grob and the left side of the note, without
+allowing them to collide.
+
+@item semi-fixed-space
+Only compatible with @w{@code{first-note}} and
+@w{@code{next-note}}.  Put this much space between the grob and
+the note, such that half of the space is fixed and half is
+stretchable.
+@end table
+@end quotation
+
+Rules for this spacing are much more complicated than this.
+See [Wanske] page 126--134, [Ross] page 143--147.")
      (space-to-barline ,boolean? "If set, the distance between a note
 and the following non-musical column will be measured to the bar line
 instead of to the beginning of the non-musical column.  If there is a
@@ -956,11 +1065,17 @@ this property.")
      (text-direction ,ly:dir? "This controls the ordering of the
 words.  The default @code{RIGHT} is for roman text.  Arabic or Hebrew
 should use @code{LEFT}.")
-     (thick-thickness ,number? "Bar line thickness, measured in
-@code{line-thickness}.")
-     (thickness ,number? "Line thickness, generally measured in
-@code{line-thickness}.")
-     (thin-kern ,number? "The space after a hair-line in a bar line.")
+     (thick-thickness ,number? "Thickness of the thick line in a
+bar line, expressed as a multiple of the default staff-line
+thickness (i.e. the visual output is @emph{not} influenced by
+changes to @code{@var{Staff}.StaffSymbol.thickness}).")
+     (thickness ,number? "For grobs made up of lines, this is the
+thickness of the line.  For slurs and ties, this is the distance
+between the two arcs of the curve's outline at its thickest point,
+not counting the diameter of the virtual @qq{pen} that draws the
+arcs.  This property is expressed as a multiple of the current
+staff-line thickness (i.e. the visual output is influenced by
+changes to @code{@var{Staff}.StaffSymbol.thickness}).")
      (tie-configuration ,list? "List of @code{(@var{position} .
 @var{dir})} pairs, indicating the desired tie configuration, where
 @var{position} is the offset from the center of the staff in staff
@@ -1014,6 +1129,8 @@ texts.")
 ;;;
 ;;; x
 ;;;
+     (X-align-on-main-noteheads ,boolean? "If true, this grob will
+ignore suspended noteheads when aligning itself on NoteColumn.")
      (X-extent ,number-pair? "Extent (size) in the X@tie{}direction,
 measured in staff-space units, relative to object's reference point.")
      (X-offset ,number? "The horizontal amount that this object is
@@ -1132,6 +1249,8 @@ empty in a particular staff, then that staff is erased.")
      (left-neighbor ,ly:grob? "The right-most column that has a spacing-wish
 for this column.")
 
+     (make-dead-when ,ly:grob-array? "An array of other
+@code{VerticalAxisGroup}s.  If any of them are alive, then we will turn dead.")
      (melody-spanner ,ly:grob? "The @code{MelodyItem} object for a stem.")
      (minimum-translations-alist ,list? "An list of translations for a given
 start and end point.")

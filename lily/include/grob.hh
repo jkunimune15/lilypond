@@ -27,10 +27,14 @@
 
 #include <set>
 
-class Grob
+class Grob : public Smob<Grob>
 {
+public:
+  int print_smob (SCM, scm_print_state *);
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Grob ();
 private:
-  DECLARE_SMOBS (Grob);
   DECLARE_CLASSNAME (Grob);
 
   void init ();
@@ -170,11 +174,6 @@ public:
   static SCM internal_skylines_from_element_stencils (Grob *me, Axis a, bool pure, int beg, int end);
   static SCM internal_skylines_from_element_stencils (SCM, Axis);
 };
-
-/* smob utilities */
-DECLARE_UNSMOB (Grob, grob);
-Spanner *unsmob_spanner (SCM);
-Item *unsmob_item (SCM);
 
 /* unification */
 void uniquify (vector <Grob *> &);

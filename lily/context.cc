@@ -23,7 +23,6 @@
 #include "dispatcher.hh"
 #include "global-context.hh"
 #include "international.hh"
-#include "ly-smobs.icc"
 #include "main.hh"
 #include "output-def.hh"
 #include "profile.hh"
@@ -44,7 +43,7 @@ Context::check_removal ()
 {
   for (SCM p = context_list_; scm_is_pair (p); p = scm_cdr (p))
     {
-      Context *ctx = unsmob_context (scm_car (p));
+      Context *ctx = Context::unsmob (scm_car (p));
 
       ctx->check_removal ();
       if (ctx->is_removable ())
@@ -55,11 +54,6 @@ Context::check_removal ()
           send_stream_event (ctx, "RemoveContext", 0, 0);
         }
     }
-}
-
-Context::Context (Context const & /* src */)
-{
-  assert (false);
 }
 
 Scheme_hash_table *
@@ -176,7 +170,7 @@ Context::find_create_context (SCM n, const string &id, SCM operations)
       SCM score_name = default_child_context_name ();
       SCM score_def = find_context_def (get_output_def (), score_name);
 
-      if (Context_def *cd = unsmob_context_def (score_def))
+      if (Context_def *cd = Context_def::unsmob (score_def))
         {
           if (cd->is_alias (n))
             return create_context (cd, id, operations);
@@ -236,14 +230,14 @@ IMPLEMENT_LISTENER (Context, acknowledge_infant);
 void
 Context::acknowledge_infant (SCM sev)
 {
-  infant_event_ = unsmob_stream_event (sev);
+  infant_event_ = Stream_event::unsmob (sev);
 }
 
 IMPLEMENT_LISTENER (Context, set_property_from_event);
 void
 Context::set_property_from_event (SCM sev)
 {
-  Stream_event *ev = unsmob_stream_event (sev);
+  Stream_event *ev = Stream_event::unsmob (sev);
 
   SCM sym = ev->get_property ("symbol");
   if (scm_is_symbol (sym))
@@ -267,7 +261,7 @@ IMPLEMENT_LISTENER (Context, unset_property_from_event);
 void
 Context::unset_property_from_event (SCM sev)
 {
-  Stream_event *ev = unsmob_stream_event (sev);
+  Stream_event *ev = Stream_event::unsmob (sev);
 
   SCM sym = ev->get_property ("symbol");
   type_check_assignment (sym, SCM_EOL, ly_symbol2scm ("translation-type?"));
@@ -282,7 +276,7 @@ IMPLEMENT_LISTENER (Context, create_context_from_event);
 void
 Context::create_context_from_event (SCM sev)
 {
-  Stream_event *ev = unsmob_stream_event (sev);
+  Stream_event *ev = Stream_event::unsmob (sev);
 
   string id = ly_scm2string (ev->get_property ("id"));
   SCM ops = ev->get_property ("ops");
@@ -328,7 +322,7 @@ Context::create_context_from_event (SCM sev)
 
   new_context->unprotect ();
 
-  Context_def *td = unsmob_context_def (new_context->definition_);
+  Context_def *td = Context_def::unsmob (new_context->definition_);
 
   /* This cannot move before add_context (), because \override
      operations require that we are in the hierarchy.  */
@@ -353,7 +347,7 @@ Context::path_to_acceptable_context (SCM name) const
         accepts = scm_cons (elt, accepts);
       }
 
-  return unsmob_context_def (definition_)->path_to_acceptable_context (name,
+  return Context_def::unsmob (definition_)->path_to_acceptable_context (name,
          get_output_def (),
          scm_reverse_x (accepts, SCM_EOL));
 
@@ -383,7 +377,7 @@ Context::create_context (Context_def *cdef,
 
   assert (infant_event_);
   SCM infant_scm = infant_event_->get_property ("context");
-  Context *infant = unsmob_context (infant_scm);
+  Context *infant = Context::unsmob (infant_scm);
 
   if (!infant || infant->get_parent_context () != this)
     {
@@ -419,11 +413,11 @@ Context::get_default_interpreter (const string &context_id)
       SCM st = find_context_def (get_output_def (), nm);
 
       string name = ly_symbol2string (nm);
-      Context_def *t = unsmob_context_def (st);
+      Context_def *t = Context_def::unsmob (st);
       if (!t)
         {
           warning (_f ("cannot find or create: `%s'", name.c_str ()));
-          t = unsmob_context_def (this->definition_);
+          t = Context_def::unsmob (this->definition_);
         }
       if (scm_is_symbol (t->get_default_child (SCM_EOL)))
         {
@@ -457,6 +451,19 @@ Context::where_defined (SCM sym, SCM *value) const
     return (Context *)this;
 
   return (daddy_context_) ? daddy_context_->where_defined (sym, value) : 0;
+}
+
+/* Quick variant of where_defined.  Checks only the context itself. */
+
+bool
+Context::here_defined (SCM sym, SCM *value) const
+{
+#ifndef NDEBUG
+  if (profile_property_accesses)
+    note_property_access (&context_property_lookup_table, sym);
+#endif
+
+  return properties_dict ()->try_retrieve (sym, value);
 }
 
 /*
@@ -548,8 +555,8 @@ IMPLEMENT_LISTENER (Context, change_parent);
 void
 Context::change_parent (SCM sev)
 {
-  Stream_event *ev = unsmob_stream_event (sev);
-  Context *to = unsmob_context (ev->get_property ("context"));
+  Stream_event *ev = Stream_event::unsmob (sev);
+  Context *to = Context::unsmob (ev->get_property ("context"));
 
   disconnect_from_parent ();
   to->add_context (this);
@@ -594,7 +601,7 @@ find_context_below (Context *where,
   for (SCM s = where->children_contexts ();
        !found && scm_is_pair (s); s = scm_cdr (s))
     {
-      Context *tr = unsmob_context (scm_car (s));
+      Context *tr = Context::unsmob (scm_car (s));
 
       found = find_context_below (tr, type, id);
     }
@@ -611,7 +618,7 @@ Context::properties_as_alist () const
 SCM
 Context::context_name_symbol () const
 {
-  Context_def *td = unsmob_context_def (definition_);
+  Context_def *td = Context_def::unsmob (definition_);
   return td->get_context_name ();
 }
 
@@ -651,60 +658,54 @@ Context::now_mom () const
 }
 
 int
-Context::print_smob (SCM s, SCM port, scm_print_state *)
+Context::print_smob (SCM port, scm_print_state *)
 {
-  Context *sc = (Context *) SCM_CELL_WORD_1 (s);
-
   scm_puts ("#<", port);
-  scm_puts (sc->class_name (), port);
-  if (Context_def *d = unsmob_context_def (sc->definition_))
+  scm_puts (class_name (), port);
+  if (Context_def *d = Context_def::unsmob (definition_))
     {
       scm_puts (" ", port);
       scm_display (d->get_context_name (), port);
     }
 
-  if (!sc->id_string_.empty ())
+  if (!id_string_.empty ())
     {
       scm_puts ("=", port);
-      scm_puts (sc->id_string_.c_str (), port);
+      scm_puts (id_string_.c_str (), port);
     }
 
   scm_puts (" ", port);
 
-  scm_display (sc->context_list_, port);
+  scm_display (context_list_, port);
   scm_puts (" >", port);
 
   return 1;
 }
 
 SCM
-Context::mark_smob (SCM sm)
+Context::mark_smob ()
 {
-  Context *me = (Context *) SCM_CELL_WORD_1 (sm);
+  scm_gc_mark (context_list_);
+  scm_gc_mark (aliases_);
+  scm_gc_mark (definition_);
+  scm_gc_mark (definition_mods_);
+  scm_gc_mark (properties_scm_);
+  scm_gc_mark (accepts_list_);
+  scm_gc_mark (default_child_);
 
-  scm_gc_mark (me->context_list_);
-  scm_gc_mark (me->aliases_);
-  scm_gc_mark (me->definition_);
-  scm_gc_mark (me->definition_mods_);
-  scm_gc_mark (me->properties_scm_);
-  scm_gc_mark (me->accepts_list_);
-  scm_gc_mark (me->default_child_);
+  if (implementation_)
+    scm_gc_mark (implementation_->self_scm ());
 
-  if (me->implementation_)
-    scm_gc_mark (me->implementation_->self_scm ());
+  if (event_source_)
+    scm_gc_mark (event_source_->self_scm ());
 
-  if (me->event_source_)
-    scm_gc_mark (me->event_source_->self_scm ());
+  if (events_below_)
+    scm_gc_mark (events_below_->self_scm ());
 
-  if (me->events_below_)
-    scm_gc_mark (me->events_below_->self_scm ());
-
-  return me->properties_scm_;
+  return properties_scm_;
 }
 
-IMPLEMENT_SMOBS (Context);
-IMPLEMENT_DEFAULT_EQUAL_P (Context);
-IMPLEMENT_TYPE_P (Context, "ly:context?");
+const char Context::type_p_name_[] = "ly:context?";
 
 Global_context *
 Context::get_global_context () const
@@ -733,8 +734,8 @@ measure_length (Context const *context)
 {
   SCM l = context->get_property ("measureLength");
   Rational length (1);
-  if (unsmob_moment (l))
-    length = unsmob_moment (l)->main_part_;
+  if (Moment::is_smob (l))
+    length = Moment::unsmob (l)->main_part_;
   return length;
 }
 
@@ -744,9 +745,9 @@ measure_position (Context const *context)
   SCM sm = context->get_property ("measurePosition");
 
   Moment m = 0;
-  if (unsmob_moment (sm))
+  if (Moment::is_smob (sm))
     {
-      m = *unsmob_moment (sm);
+      m = *Moment::unsmob (sm);
 
       if (m.main_part_ < Rational (0))
         {
@@ -794,7 +795,7 @@ set_context_property_on_children (Context *trans, SCM sym, SCM val)
   trans->set_property (sym, ly_deep_copy (val));
   for (SCM p = trans->children_contexts (); scm_is_pair (p); p = scm_cdr (p))
     {
-      Context *trg = unsmob_context (scm_car (p));
+      Context *trg = Context::unsmob (scm_car (p));
       set_context_property_on_children (trg, sym, ly_deep_copy (val));
     }
 }
@@ -802,14 +803,29 @@ set_context_property_on_children (Context *trans, SCM sym, SCM val)
 bool
 melisma_busy (Context *tr)
 {
-  SCM melisma_properties = tr->get_property ("melismaBusyProperties");
-  bool busy = false;
+  // When there are subcontexts, they are responsible for maintaining
+  // melismata.
+  SCM ch = tr->children_contexts ();
+  if (scm_is_pair (ch))
+    {
+      // all contexts need to have a busy melisma for this to evaluate
+      // to true.
 
-  for (; !busy && scm_is_pair (melisma_properties);
+      do {
+        if (!melisma_busy (Context::unsmob (scm_car (ch))))
+          return false;
+        ch = scm_cdr (ch);
+      } while (scm_is_pair (ch));
+      return true;
+    }
+
+  for (SCM melisma_properties = tr->get_property ("melismaBusyProperties");
+       scm_is_pair (melisma_properties);
        melisma_properties = scm_cdr (melisma_properties))
-    busy = busy || to_boolean (tr->internal_get_property (scm_car (melisma_properties)));
+    if (to_boolean (tr->get_property (scm_car (melisma_properties))))
+      return true;
 
-  return busy;
+  return false;
 }
 
 bool

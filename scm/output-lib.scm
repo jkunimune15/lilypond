@@ -249,6 +249,14 @@
    ly:self-alignment-interface::y-aligned-on-self
    ly:self-alignment-interface::pure-y-aligned-on-self))
 
+(define-public (self-alignment-interface::self-aligned-on-breakable grob)
+  "Return the @code{X-offset} that places @var{grob} according to its
+   @code{self-alignment-X} over the reference point defined by the
+   @code{break-align-anchor-alignment} of a @code{break-aligned} item
+   such as a @code{Clef}."
+  (+ (ly:break-alignable-interface::self-align-callback grob)
+     (ly:self-alignment-interface::x-aligned-on-self grob)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; staff symbol
 
@@ -396,8 +404,8 @@ and duration-log @var{log}."
                                 1.3)
                             line-thickness))
          (radius (/ (+ staff-space line-thickness) 2))
-         (letter (markup #:center-align #:vcenter pitch-string))
-         (filled-circle (markup #:draw-circle radius 0 #t)))
+         (letter (make-center-align-markup (make-vcenter-markup pitch-string)))
+         (filled-circle (make-draw-circle-markup radius 0 #t)))
 
     (ly:stencil-translate-axis
      (grob-interpret-markup
@@ -562,34 +570,38 @@ and duration-log @var{log}."
 ;; a formatter function, which is simply a wrapper around an existing
 ;; tuplet formatter function. It takes the value returned by the given
 ;; function and appends a note of given length.
-(define-public ((tuplet-number::append-note-wrapper function note) grob)
-  (let ((txt (if function (function grob) #f)))
+(define ((tuplet-number::append-note-wrapper function note) grob)
+  (let ((txt (and function (function grob))))
 
     (if txt
-        (markup txt #:fontsize -5 #:note note UP)
-        (markup #:fontsize -5 #:note note UP))))
+        (make-line-markup
+         (list txt (make-fontsize-markup -5 (make-note-markup note UP))))
+        (make-fontsize-markup -5 (make-note-markup note UP)))))
+(export tuplet-number::append-note-wrapper)
 
 ;; Print a tuplet denominator with a different number than the one derived from
 ;; the actual tuplet fraction
-(define-public ((tuplet-number::non-default-tuplet-denominator-text denominator)
+(define ((tuplet-number::non-default-tuplet-denominator-text denominator)
                 grob)
   (number->string (if denominator
                       denominator
                       (ly:event-property (event-cause grob) 'denominator))))
+(export tuplet-number::non-default-tuplet-denominator-text)
 
 ;; Print a tuplet fraction with different numbers than the ones derived from
 ;; the actual tuplet fraction
-(define-public ((tuplet-number::non-default-tuplet-fraction-text
+(define ((tuplet-number::non-default-tuplet-fraction-text
                  denominator numerator) grob)
   (let* ((ev (event-cause grob))
          (den (if denominator denominator (ly:event-property ev 'denominator)))
          (num (if numerator numerator (ly:event-property ev 'numerator))))
 
     (format #f "~a:~a" den num)))
+(export tuplet-number::non-default-tuplet-fraction-text)
 
 ;; Print a tuplet fraction with note durations appended to the numerator and the
 ;; denominator
-(define-public ((tuplet-number::fraction-with-notes
+(define ((tuplet-number::fraction-with-notes
                  denominatornote numeratornote) grob)
   (let* ((ev (event-cause grob))
          (denominator (ly:event-property ev 'denominator))
@@ -597,10 +609,11 @@ and duration-log @var{log}."
 
     ((tuplet-number::non-default-fraction-with-notes
       denominator denominatornote numerator numeratornote) grob)))
+(export tuplet-number::fraction-with-notes)
 
 ;; Print a tuplet fraction with note durations appended to the numerator and the
 ;; denominator
-(define-public ((tuplet-number::non-default-fraction-with-notes
+(define ((tuplet-number::non-default-fraction-with-notes
                  denominator denominatornote numerator numeratornote) grob)
   (let* ((ev (event-cause grob))
          (den (if denominator denominator (ly:event-property ev 'denominator)))
@@ -608,10 +621,11 @@ and duration-log @var{log}."
 
     (make-concat-markup (list
                          (make-simple-markup (format #f "~a" den))
-                         (markup #:fontsize -5 #:note denominatornote UP)
+                         (make-fontsize-markup -5 (make-note-markup denominatornote UP))
                          (make-simple-markup " : ")
                          (make-simple-markup (format #f "~a" num))
-                         (markup #:fontsize -5 #:note numeratornote UP)))))
+                         (make-fontsize-markup -5 (make-note-markup numeratornote UP))))))
+(export tuplet-number::non-default-fraction-with-notes)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -691,7 +705,7 @@ and duration-log @var{log}."
 ;; annotations
 
 (define-public (numbered-footnotes int)
-  (markup #:tiny (number->string (+ 1 int))))
+  (make-tiny-markup (number->string (+ 1 int))))
 
 (define-public (symbol-footnotes int)
   (define (helper symbols out idx n)
@@ -701,10 +715,10 @@ and duration-log @var{log}."
                 (string-append out (list-ref symbols idx))
                 idx
                 (- n 1))))
-  (markup #:tiny (helper '("*" "†" "‡" "§" "¶")
-                         ""
-                         (remainder int 5)
-                         (+ 1 (quotient int 5)))))
+  (make-tiny-markup (helper '("*" "†" "‡" "§" "¶")
+                            ""
+                            (remainder int 5)
+                            (+ 1 (quotient int 5)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; accidentals
@@ -718,8 +732,7 @@ and duration-log @var{log}."
 
 (define-public accidental-interface::height
   (ly:make-unpure-pure-container
-   ly:accidental-interface::height
-   ly:accidental-interface::pure-height))
+   ly:accidental-interface::height))
 
 (define-public cancellation-glyph-name-alist
   '((0 . "accidentals.natural")))
@@ -982,7 +995,9 @@ and duration-log @var{log}."
 (define-public (string-number::calc-text grob)
   (let ((event (event-cause grob)))
     (or (ly:event-property event 'text #f)
-        (number->string (ly:event-property event 'string-number) 10))))
+        (number-format
+         (ly:grob-property grob 'number-type)
+         (ly:event-property event 'string-number)))))
 
 (define-public (stroke-finger::calc-text grob)
   (let ((event (event-cause grob)))
@@ -1021,7 +1036,7 @@ between the two text elements."
                                              '(bound-details left padding)
                                              (+ my-padding script-padding)))))))
 
-(define-public ((elbowed-hairpin coords mirrored?) grob)
+(define ((elbowed-hairpin coords mirrored?) grob)
   "Create hairpin based on a list of @var{coords} in @code{(cons x y)}
 form.  @code{x} is the portion of the width consumed for a given line
 and @code{y} is the portion of the height.  For example,
@@ -1080,6 +1095,7 @@ and draws the stencil based on its coordinates.
             (if mirrored? (my-c-p-s downlist thick decresc?) empty-stencil))
            (cons xtrans ytrans)))
         '())))
+(export elbowed-hairpin)
 
 (define-public flared-hairpin
   (elbowed-hairpin '((0.95 . 0.4) (1.0 . 1.0)) #t))
@@ -1099,13 +1115,14 @@ and draws the stencil based on its coordinates.
                                     (make-tied-lyric-markup text)
                                     text))))
 
-(define-public ((grob::calc-property-by-copy prop) grob)
+(define ((grob::calc-property-by-copy prop) grob)
   (ly:event-property (event-cause grob) prop))
+(export grob::calc-property-by-copy)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; general inheritance
 
-(define-public ((grob::inherit-parent-property axis property . default) grob)
+(define ((grob::inherit-parent-property axis property . default) grob)
   "@var{grob} callback generator for inheriting a @var{property} from
 an @var{axis} parent, defaulting to @var{default} if there is no
 parent or the parent has no setting."
@@ -1115,6 +1132,7 @@ parent or the parent has no setting."
       (apply ly:grob-property parent property default))
      ((pair? default) (car default))
      (else '()))))
+(export grob::inherit-parent-property)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; fret boards
@@ -1141,7 +1159,7 @@ parent or the parent has no setting."
   (ly:grob-property grob 'positioning-done)
   (let* ((shift (ly:grob-property grob 'toward-stem-shift 0.0))
          (note-head-location
-          (ly:self-alignment-interface::centered-on-x-parent grob))
+          (ly:self-alignment-interface::aligned-on-x-parent grob))
          (note-head-grob (ly:grob-parent grob X))
          (stem-grob (ly:grob-object note-head-grob 'stem)))
 
@@ -1342,3 +1360,82 @@ parent or the parent has no setting."
               (larger (max (car edge-height) (cdr edge-height))))
           (interval-union '(0 . 0) (cons smaller larger)))
         '(0 . 0))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; measure counter
+
+(define (measure-counter-stencil grob)
+  "Print a number for a measure count.  The number is centered using
+the extents of @code{BreakAlignment} grobs associated with the left and
+right bounds of a @code{MeasureCounter} spanner.  Broken measures are
+numbered in parentheses."
+  (let* ((num (markup (number->string (ly:grob-property grob 'count-from))))
+         (orig (ly:grob-original grob))
+         (siblings (ly:spanner-broken-into orig)) ; have we been split?
+         (num
+          (if (or (null? siblings)
+                  (eq? grob (car siblings)))
+              num
+              (make-parenthesize-markup num)))
+         (num (grob-interpret-markup grob num))
+         (num (ly:stencil-aligned-to num X (ly:grob-property grob 'self-alignment-X)))
+         (left-bound (ly:spanner-bound grob LEFT))
+         (right-bound (ly:spanner-bound grob RIGHT))
+         (elts-L (ly:grob-array->list (ly:grob-object left-bound 'elements)))
+         (elts-R (ly:grob-array->list (ly:grob-object right-bound 'elements)))
+         (break-alignment-L
+           (filter
+             (lambda (elt) (grob::has-interface elt 'break-alignment-interface))
+             elts-L))
+         (break-alignment-R
+           (filter
+             (lambda (elt) (grob::has-interface elt 'break-alignment-interface))
+             elts-R))
+         (refp (ly:grob-system grob))
+         (break-alignment-L-ext (ly:grob-extent (car break-alignment-L) refp X))
+         (break-alignment-R-ext (ly:grob-extent (car break-alignment-R) refp X))
+         (num
+           (ly:stencil-translate-axis
+             num
+             (+ (interval-length break-alignment-L-ext)
+                (* 0.5
+                   (- (car break-alignment-R-ext)
+                      (cdr break-alignment-L-ext))))
+             X)))
+    num))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; make-engraver helper macro
+
+(defmacro-public make-engraver forms
+  "Helper macro for creating Scheme engravers.
+
+The usual form for an engraver is an association list (or alist)
+mapping symbols to either anonymous functions or to another such
+alist.
+
+@code{make-engraver} accepts forms where the first element is either
+an argument list starting with the respective symbol, followed by the
+function body (comparable to the way @code{define} is used for
+defining functions), or a single symbol followed by subordinate forms
+in the same manner.  You can also just make an alist pair
+literally (the @samp{car} is quoted automatically) as long as the
+unevaluated @samp{cdr} is not a pair.  This is useful if you already
+have defined your engraver functions separately.
+
+Symbols mapping to a function would be @code{initialize},
+@code{start-translation-timestep}, @code{process-music},
+@code{process-acknowledged}, @code{stop-translation-timestep}, and
+@code{finalize}.  Symbols mapping to another alist specified in the
+same manner are @code{listeners} with the subordinate symbols being
+event classes, and @code{acknowledgers} and @code{end-acknowledgers}
+with the subordinate symbols being interfaces."
+  (let loop ((forms forms))
+    (if (or (null? forms) (pair? forms))
+        `(list
+          ,@(map (lambda (form)
+                   (if (pair? (car form))
+                       `(cons ',(caar form) (lambda ,(cdar form) ,@(cdr form)))
+                       `(cons ',(car form) ,(loop (cdr form)))))
+                 forms))
+        forms)))

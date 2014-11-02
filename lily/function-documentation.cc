@@ -103,16 +103,11 @@ void
 init_func_doc ()
 {
   ly_add_type_predicate ((void *) &is_direction, "direction");
-  ly_add_type_predicate ((void *) &is_music_function, "Music_function");
   ly_add_type_predicate ((void *) &ly_is_port, "port");
   ly_add_type_predicate ((void *) &ly_cheap_is_list, "list");
-  ly_add_type_predicate ((void *) &unsmob_global_context, "Global_context");
-  ly_add_type_predicate ((void *) &unsmob_input, "Input");
-  ly_add_type_predicate ((void *) &unsmob_moment, "Moment");
-  ly_add_type_predicate ((void *) &unsmob_paper_score, "Paper_score");
-  ly_add_type_predicate ((void *) &unsmob_performance, "Performance");
-  ly_add_type_predicate ((void *) &is_unpure_pure_container, "unpure pure container");
-
+  ly_add_type_predicate ((void *) &Global_context::is_smob, "Global_context");
+  ly_add_type_predicate ((void *) &Paper_score::is_smob, "Paper_score");
+  ly_add_type_predicate ((void *) &Performance::is_smob, "Performance");
   ly_add_type_predicate ((void *) &is_axis, "axis");
   ly_add_type_predicate ((void *) &is_number_pair, "number pair");
   ly_add_type_predicate ((void *) &ly_is_list, "list");
@@ -125,10 +120,10 @@ init_func_doc ()
   ly_add_type_predicate ((void *) &scm_is_rational, "rational");
   ly_add_type_predicate ((void *) &scm_is_string, "string");
   ly_add_type_predicate ((void *) &scm_is_vector, "vector");
-  ly_add_type_predicate ((void *) &unsmob_item, "Item");
-  ly_add_type_predicate ((void *) &unsmob_music, "Music");
-  ly_add_type_predicate ((void *) &unsmob_spanner, "Spanner");
-  ly_add_type_predicate ((void *) &unsmob_stream_event, "Stream_event");
+  ly_add_type_predicate ((void *) &Item::is_smob, "Item");
+  ly_add_type_predicate ((void *) &Music::is_smob, "Music");
+  ly_add_type_predicate ((void *) &Spanner::is_smob, "Spanner");
+  ly_add_type_predicate ((void *) &Stream_event::is_smob, "Stream_event");
 }
 
 ADD_SCM_INIT_FUNC (func_doc, init_func_doc);

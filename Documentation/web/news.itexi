@@ -27,6 +27,114 @@ NOTE:
 @end ignore
 
 @newsItem
+@subsubheading LilyPond 2.19.14 released  @emph{September 14, 2014}
+
+We are happy to announce the release of LilyPond 2.19.14.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
+@subsubheading LilyPond 2.19.13 released  @emph{August 31, 2014}
+
+We are happy to announce the release of LilyPond 2.19.13.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
+@subsubheading LilyPond 2.19.12 released  @emph{August 17, 2014}
+
+We are happy to announce the release of LilyPond 2.19.12.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
+@subsubheading LilyPond 2.19.11 released  @emph{August 3, 2014}
+
+We are happy to announce the release of LilyPond 2.19.11.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
+@subsubheading LilyPond 2.19.10 released  @emph{July 13, 2014}
+
+We are happy to announce the release of LilyPond 2.19.10.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
+@subsubheading LilyPond 2.19.9 released  @emph{June 29, 2014}
+
+We are happy to announce the release of LilyPond 2.19.9.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
+@subsubheading LilyPond 2.19.8 released  @emph{June 15, 2014}
+
+We are happy to announce the release of LilyPond 2.19.8.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
+@subsubheading LilyPond 2.19.7 released  @emph{May 25, 2014}
+
+We are happy to announce the release of LilyPond 2.19.7.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
+@subsubheading LilyPond 2.19.6 released  @emph{May 11, 2014}
+
+We are happy to announce the release of LilyPond 2.19.6.  This
+release includes a number of enhancements, and contains some work
+in progress.  You will have access to the very latest features, but
+some may be incomplete, and you may encounter bugs and crashes.  If you
+require a stable version of Lilypond, we recommend using the 2.18
+version.
+
+@newsEnd
+
+@newsItem
 @subsubheading LilyPond 2.19.5 released  @emph{April 20, 2014}
 
 We are happy to announce the release of LilyPond 2.19.5.  This
@@ -4391,7 +4499,7 @@ file and download @ref{Old downloads}!
 
 @newsItem
 @subsubheading February 26, 2005
-The @uref{http://lsr.dsi.unimi.it/,LilyPond Snippet
+The @uref{http://lsr.di.unimi.it/,LilyPond Snippet
 Repository (LSR)} is a searchable database of LilyPond code
 snippets.  You can add snippets too, so join the LSR project, and
 contribute creative ideas for using LilyPond.

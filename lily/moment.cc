@@ -43,24 +43,15 @@ Moment::Moment (Rational m)
   grace_part_ = Rational (0);
 }
 
-#include "ly-smobs.icc"
 
-IMPLEMENT_SIMPLE_SMOBS (Moment);
-IMPLEMENT_TYPE_P (Moment, "ly:moment?");
+const char Moment::type_p_name_[] = "ly:moment?";
 
-SCM
-Moment::mark_smob (SCM)
-{
-  return SCM_EOL;
-}
 
 int
-Moment::print_smob (SCM s, SCM port, scm_print_state *)
+Moment::print_smob (SCM port, scm_print_state *)
 {
-  Moment *r = (Moment *) SCM_CELL_WORD_1 (s);
-
   scm_puts ("#<Mom ", port);
-  string str = r->to_string ();
+  string str = to_string ();
   scm_puts ((char *)str.c_str (), port);
   scm_puts (">", port);
 
@@ -80,8 +71,8 @@ Moment::as_scheme () const
 SCM
 Moment::equal_p (SCM a, SCM b)
 {
-  Moment *m1 = unsmob_moment (a);
-  Moment *m2 = unsmob_moment (b);
+  Moment *m1 = Moment::unsmob (a);
+  Moment *m2 = Moment::unsmob (b);
 
   return (*m1 == *m2) ? SCM_BOOL_T : SCM_BOOL_F;
 }
@@ -195,7 +186,7 @@ operator << (ostream &os, Moment const &m)
 Moment
 robust_scm2moment (SCM m, Moment d)
 {
-  Moment *p = unsmob_moment (m);
+  Moment *p = Moment::unsmob (m);
   if (!p)
     return d;
   else
@@ -205,6 +196,5 @@ robust_scm2moment (SCM m, Moment d)
 bool
 moment_less (SCM a, SCM b)
 {
-  return *unsmob_moment (a) < *unsmob_moment (b);
+  return *Moment::unsmob (a) < *Moment::unsmob (b);
 }
-

@@ -24,12 +24,16 @@
 #include "smobs.hh"
 #include "std-vector.hh"
 
-class Grob_array
+class Grob_array : public Simple_smob<Grob_array>
 {
+public:
+  int print_smob (SCM, scm_print_state *);
+  SCM mark_smob ();
+  static const char type_p_name_[];
+private:
   vector<Grob *> grobs_;
   bool ordered_;
 
-  DECLARE_SIMPLE_SMOBS (Grob_array);
 
   Grob_array ();
 public:
@@ -49,11 +53,9 @@ public:
   static SCM make_array ();
 };
 
-DECLARE_UNSMOB (Grob_array, grob_array);
 
 vector<Grob *> const &ly_scm2link_array (SCM x);
 SCM grob_list_to_grob_array (SCM lst);
 SCM grob_array_to_list (Grob_array *array);
 
 #endif /* GROB_ARRAY_HH */
-

@@ -309,11 +309,6 @@ see @ref{Manual syllable durations}.  This technique is also useful
 when setting dialogue over music; for examples showing this, see
 @ref{Dialogue over music}.
 
-When entered in this way the words are left-aligned to the notes
-by default, but may be center-aligned to the notes of a melody by
-specifying an associated voice, if one exists.  For details, see
-@ref{Manual syllable durations}.
-
 @end itemize
 
 @seealso
@@ -509,8 +504,7 @@ completely independently of notes.  In this case do not use
 but with pitches replaced by text -- and the duration of each
 syllable is entered explicitly after the syllable.
 
-By default, syllables will be left-aligned to the corresponding
-musical moment.  Hyphenated lines may be drawn between syllables
+Hyphenated lines may be drawn between syllables
 as usual, but extender lines cannot be drawn when there is no
 associated voice.
 
@@ -519,11 +513,10 @@ Here are two examples:
 @lilypond[relative=1,verbatim,quote]
 <<
   \new Voice = "melody" {
-    \time 3/4
-    c2 e4 g2 f
+    c'2 a f f e e
   }
   \new Lyrics \lyricmode {
-    play1 the4 game4
+    c4. -- a -- f -- f -- e2. -- e
   }
 >>
 @end lilypond
@@ -554,26 +547,21 @@ Here are two examples:
 This technique is useful when writing dialogue over music, see
 @ref{Dialogue over music}.
 
-To center-align syllables on the notes at the corresponding musical
-moments, set @code{associatedVoice} to the name of the Voice context
-containing those notes.  When @code{associatedVoice} is set, both
-double hyphens and double underscores can be used to draw
-hyphenated lines and extenders under melismata correctly.
+To change syllable alignment, simply override the @code{self-alignment-X}
+property:
 
 @lilypond[relative=1,verbatim,quote]
 <<
   \new Voice = "melody" {
     \time 3/4
-    c2 e4 g f g
+    c2 e4 g2 f
   }
   \new Lyrics \lyricmode {
-    \set associatedVoice = #"melody"
-    play2 the4 game2. __
+    \override LyricText.self-alignment-X = #LEFT
+    play1 a4 game4
   }
 >>
 @end lilypond
-
-@c TODO see also feature request 707 - show how to do this with manual durations
 
 @seealso
 Notation Reference:
@@ -1694,13 +1682,6 @@ words = \lyricmode { la __ la __ }
 >>
 @end lilypond
 
-The @code{NullVoice} context must be placed within a @code{Staff}
-context and contain notes that are already being displayed in that staff and that are also in the same octave.  Otherwise the
-@code{NullVoice} may interact with the printed voices in
-unexpected ways.  For example, arbitrary notes in the
-@code{NullVoice} may cause accidentals to appear (or disappear) on
-the staff.
-
 This method also can be used with the @code{\partcombine}
 function, which does not allow lyrics on its own:
 
@@ -1736,22 +1717,12 @@ aligner = \relative { b'8( c d c) d( d d d) }
 words = \lyricmode { la __ la __ }
 
 \new ChoirStaff <<
-  \new Staff <<
-    \soprano
-    \new NullVoice = "aligner" \aligner
-  >>
+  \new Staff \soprano
+  \new NullVoice = "aligner" \aligner
   \new Lyrics \lyricsto "aligner" \words
   \new Staff \partcombine \altoOne \altoTwo
 >>
 @end lilypond
-
-However, note that in the second half of the measure above, the
-notes in the @code{NullVoice} context reflect the rhythm of the
-lower staff, but they do not deviate from the single pitch being
-displayed in the staff to which the @code{NullVoice} belongs.
-While not actually required in this particular example, it is a
-good idea in general to enter the notes in this way.
-
 
 @node Stanzas
 @subsection Stanzas
@@ -2418,7 +2389,7 @@ Notation Reference:
 @ref{Score layout},
 @ref{Separating systems},
 @ref{Setting the staff size},
-@ref{Using an extra voice for breaks},
+@ref{Breaks},
 @ref{Vertical spacing}.
 
 Internals Reference:
@@ -2601,51 +2572,42 @@ c4^\markup \fontsize #1 \smallCaps Kaspar
 c c c
 @end lilypond
 
-Alternatively, if there are many character changes, it may be
-easier to set up @qq{instrument} definitions for each character at
-the top level so that @code{\instrumentSwitch} can be used to
-indicate each change.
+Alternatively, if there are many character changes, it may be easier
+to set up variables to hold the definitions for each character so
+that the switch of characters can be indicated easily and concisely.
 
 @lilypond[quote,verbatim]
-\addInstrumentDefinition #"kaspar"
-  #`((instrumentTransposition . ,(ly:make-pitch -1 0 0))
-     (shortInstrumentName . "Kas.")
-     (clefGlyph . "clefs.G")
-     (clefTransposition . -7)
-     (middleCPosition . 1)
-     (clefPosition . -2)
-     (instrumentCueName . ,(markup #:fontsize 1 #:smallCaps "Kaspar"))
-     (midiInstrument . "voice oohs"))
+kaspar = {
+  \clef "G_8"
+  \set Staff.shortVocalName = "Kas."
+  \set Staff.midiInstrument = "voice oohs"
+  <>^\markup \smallCaps "Kaspar"
+}
 
-\addInstrumentDefinition #"melchior"
-  #`((instrumentTransposition . ,(ly:make-pitch 0 0 0))
-     (shortInstrumentName . "Mel.")
-     (clefGlyph . "clefs.F")
-     (clefTransposition . 0)
-     (middleCPosition . 6)
-     (clefPosition . 2)
-     (instrumentCueName . ,(markup #:fontsize 1 #:smallCaps "Melchior"))
-     (midiInstrument . "choir aahs"))
+melchior = {
+  \clef "bass"
+  \set Staff.shortVocalName = "Mel."
+  \set Staff.midiInstrument = "choir aahs"
+  <>^\markup \smallCaps "Melchior"
+}
 
 \relative c' {
-  \instrumentSwitch "kaspar"
+  \kaspar
   c4 c c c
-  \instrumentSwitch "melchior"
+  \melchior
   a4 a a a
-  \instrumentSwitch "kaspar"
+  \kaspar
   c4 c c c
 }
 @end lilypond
 
 @seealso
+Learning Manual:
+@rlearning{Organizing pieces with variables}.
+
 Notation Reference:
-@ref{Instrument names},
-@ref{Scheme functions},
 @ref{Text},
 @ref{Text markup commands}.
-
-Extending LilyPond:
-@rextend{Markup construction in Scheme}.
 
 
 @node Musical cues

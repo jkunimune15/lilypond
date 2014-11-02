@@ -72,7 +72,7 @@ get_support_set (Grob *me)
                acs = scm_cdr (acs))
             for (SCM s = scm_cdar (acs); scm_is_pair (s); s = scm_cdr (s))
               {
-                Grob *a = unsmob_grob (scm_car (s));
+                Grob *a = Grob::unsmob (scm_car (s));
                 support.insert (a);
               }
         }
@@ -96,7 +96,7 @@ axis_aligned_side_helper (SCM smob, Axis a, bool pure, int start, int end, SCM c
       current_off_ptr = &r;
     }
 
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   // We will only ever want widths of spanners after line breaking
   // so we can set pure to false
   if (dynamic_cast<Spanner *> (me) && a == X_AXIS)
@@ -138,7 +138,7 @@ MAKE_SCHEME_CALLBACK (Side_position_interface, calc_cross_staff, 1)
 SCM
 Side_position_interface::calc_cross_staff (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   extract_grob_set (me, "side-support-elements", elts);
 
   Direction my_dir = get_grob_direction (me) ;
@@ -212,7 +212,7 @@ Side_position_interface::aligned_side (Grob *me, Axis a, bool pure, int start, i
                                           pure,
                                           start,
                                           end);
-  if (Skyline_pair::unsmob (skyp))
+  if (Skyline_pair::is_smob (skyp))
     {
       // for spanner pure heights, we don't know horizontal spacing,
       // so a spanner can never have a meaningful x coordiante
@@ -271,7 +271,7 @@ Side_position_interface::aligned_side (Grob *me, Axis a, bool pure, int start, i
                                                 start,
                                                 end);
 
-           if (Skyline_pair::unsmob (sp))
+           if (Skyline_pair::is_smob (sp))
              {
                Real xc = pure && dynamic_cast<Spanner *> (e)
                          ? e->get_parent (X_AXIS)->relative_coordinate (common[X_AXIS], X_AXIS)
@@ -419,7 +419,7 @@ Side_position_interface::set_axis (Grob *me, Axis a)
       chain_offset_callback (me,
                              (a == X_AXIS)
                              ? x_aligned_side_proc
-                             : ly_make_unpure_pure_container (y_aligned_side_proc, pure_y_aligned_side_proc),
+                             : Unpure_pure_container::make_smob (y_aligned_side_proc, pure_y_aligned_side_proc),
                              a);
     }
 }
@@ -440,7 +440,7 @@ MAKE_SCHEME_CALLBACK (Side_position_interface, move_to_extremal_staff, 1);
 SCM
 Side_position_interface::move_to_extremal_staff (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   System *sys = dynamic_cast<System *> (me->get_system ());
   Direction dir = get_grob_direction (me);
   if (dir != DOWN)
@@ -465,7 +465,7 @@ Side_position_interface::move_to_extremal_staff (SCM smob)
   Axis_group_interface::add_element (top_staff, me);
 
   // Remove any cross-staff side-support dependencies
-  Grob_array *ga = unsmob_grob_array (me->get_object ("side-support-elements"));
+  Grob_array *ga = Grob_array::unsmob (me->get_object ("side-support-elements"));
   if (ga)
     {
       vector<Grob *> const &elts = ga->array ();

@@ -7,7 +7,6 @@ automatic-beam-subdivisions.ly
 automatically-change-durations.ly
 avoiding-collisions-with-chord-fingerings.ly
 beam-endings-in-score-context.ly
-beam-grouping-in-7-8-time.ly
 beams-across-line-breaks.ly
 changing-beam-knee-gap.ly
 changing-form-of-multi-measure-rests.ly
@@ -23,7 +22,7 @@ controlling-tuplet-bracket-visibility.ly
 creating-metronome-marks-in-markup-mode.ly
 engraving-ties-manually.ly
 engraving-tremolos-with-floating-beams.ly
-entering-several-tuplets-using-only-one--times-command.ly
+entering-several-tuplets-using-only-one--tuplet-command.ly
 flat-flags-and-beam-nibs.ly
 forcing-rehearsal-marks-to-start-from-a-given-letter-or-number.ly
 generating-custom-flags.ly
@@ -60,6 +59,8 @@ stemlets.ly
 strict-beat-beaming.ly
 subdividing-beams.ly
 three-sided-box.ly
+time-signature-in-parentheses---method-3.ly
+time-signature-in-parentheses.ly
 time-signature-printing-only-the-numerator-as-a-number-instead-of-the-fraction.ly
 tweaking-grace-layout-within-music.ly
 using-alternative-flag-styles.ly

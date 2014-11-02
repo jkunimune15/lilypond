@@ -248,7 +248,7 @@ Beam_engraver::acknowledge_rest (Grob_info info)
   if (beam_
       && !scm_is_number (info.grob ()->get_property_data ("staff-position")))
     chain_offset_callback (info.grob (),
-                           ly_make_unpure_pure_container
+                           Unpure_pure_container::make_smob
                              (Beam::rest_collision_callback_proc,
                               Beam::pure_rest_collision_callback_proc),
                            Y_AXIS);
@@ -285,9 +285,9 @@ Beam_engraver::acknowledge_stem (Grob_info info)
 
   last_stem_added_at_ = now;
 
-  Duration *stem_duration = unsmob_duration (ev->get_property ("duration"));
+  Duration *stem_duration = Duration::unsmob (ev->get_property ("duration"));
   int durlog = stem_duration->duration_log ();
-  //int durlog = unsmob_duration (ev->get_property ("duration"))->duration_log ();
+  //int durlog = Duration::unsmob (ev->get_property ("duration"))->duration_log ();
   if (durlog <= 2)
     {
       ev->origin ()->warning (_ ("stem does not fit in beam"));

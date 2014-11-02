@@ -29,11 +29,13 @@
 
    TODO: interface is too complicated
 */
-class Lily_parser
+class Lily_parser : public Smob<Lily_parser>
 {
-  DECLARE_SMOBS (Lily_parser);
-
 public:
+  int print_smob (SCM, scm_print_state *);
+  SCM mark_smob ();
+  static const char type_p_name_[];
+  virtual ~Lily_parser ();
   Lily_lexer *lexer_;
   Sources *sources_;
   Duration default_duration_;
@@ -67,7 +69,6 @@ public:
   SCM make_scope () const;
 };
 
-DECLARE_UNSMOB (Lily_parser, lily_parser);
 
 Output_def *get_layout (Lily_parser *parser);
 Output_def *get_midi (Lily_parser *parser);

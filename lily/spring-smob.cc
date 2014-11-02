@@ -19,22 +19,9 @@
 
 #include "spring.hh"
 #include "warn.hh"
-#include "ly-smobs.icc"
 
-IMPLEMENT_SIMPLE_SMOBS (Spring);
 
-SCM
-Spring::mark_smob (SCM)
-{
-  return SCM_UNSPECIFIED;
-}
 
-int
-Spring::print_smob (SCM, SCM p, scm_print_state *)
-{
-  scm_puts ("#<Spring smob>", p);
-  return 1;
-}
 
 SCM
 Spring::equal_p (SCM a, SCM b)
@@ -62,7 +49,7 @@ LY_DEFINE (ly_spring_set_inverse_compress_strength_x, "ly:spring-set-inverse-com
   LY_ASSERT_SMOB (Spring, spring, 1);
   LY_ASSERT_TYPE (scm_is_number, strength, 2);
 
-  Spring *s = unsmob_spring (spring);
+  Spring *s = Spring::unsmob (spring);
   s->set_inverse_compress_strength (scm_to_double (strength));
   return s->smobbed_copy ();
 }
@@ -74,9 +61,9 @@ LY_DEFINE (ly_spring_set_inverse_stretch_strength_x, "ly:spring-set-inverse-stre
   LY_ASSERT_SMOB (Spring, spring, 1);
   LY_ASSERT_TYPE (scm_is_number, strength, 2);
 
-  Spring *s = unsmob_spring (spring);
+  Spring *s = Spring::unsmob (spring);
   s->set_inverse_stretch_strength (scm_to_double (strength));
   return s->smobbed_copy ();
 }
 
-IMPLEMENT_TYPE_P (Spring, "ly:spring?");
+const char Spring::type_p_name_[] = "ly:spring?";

@@ -27,7 +27,6 @@
 #include "warn.hh"
 
 #include "translator.icc"
-#include "ly-smobs.icc"
 
 Translator::~Translator ()
 {
@@ -36,7 +35,6 @@ Translator::~Translator ()
 void
 Translator::init ()
 {
-  self_scm_ = SCM_EOL;
   daddy_context_ = 0;
   smobify_self ();
 }
@@ -56,9 +54,9 @@ Translator::Translator ()
   init ();
 }
 
-Translator::Translator (Translator const &src)
+Translator::Translator (Translator const &)
+  : Smob<Translator> ()
 {
-  (void) src;
   init ();
 }
 
@@ -201,10 +199,9 @@ Translator::static_translator_description (const char *grobs,
   SMOBS
 */
 SCM
-Translator::mark_smob (SCM sm)
+Translator::mark_smob ()
 {
-  Translator *me = (Translator *) SCM_CELL_WORD_1 (sm);
-  me->derived_mark ();
+  derived_mark ();
   return SCM_EOL;
 }
 
@@ -220,9 +217,7 @@ Translator::get_score_context () const
   return daddy_context_->get_score_context ();
 }
 
-IMPLEMENT_SMOBS (Translator);
-IMPLEMENT_DEFAULT_EQUAL_P (Translator);
-IMPLEMENT_TYPE_P (Translator, "ly:translator?");
+const char Translator::type_p_name_[] = "ly:translator?";
 
 bool
 Translator::must_be_last () const
@@ -236,11 +231,10 @@ Translator::derived_mark () const
 }
 
 int
-Translator::print_smob (SCM s, SCM port, scm_print_state *)
+Translator::print_smob (SCM port, scm_print_state *)
 {
-  Translator *me = (Translator *) SCM_CELL_WORD_1 (s);
   scm_puts ("#<Translator ", port);
-  scm_puts (me->class_name (), port);
+  scm_puts (class_name (), port);
   scm_puts (" >", port);
   return 1;
 }
@@ -279,7 +273,7 @@ generic_get_acknowledger (SCM sym, vector<Acknowledge_information> const *ack_ar
 Moment
 get_event_length (Stream_event *e)
 {
-  Moment *m = unsmob_moment (e->get_property ("length"));
+  Moment *m = Moment::unsmob (e->get_property ("length"));
   if (m)
     return *m;
   else

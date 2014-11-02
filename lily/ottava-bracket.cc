@@ -49,7 +49,7 @@ MAKE_SCHEME_CALLBACK (Ottava_bracket, print, 1);
 SCM
 Ottava_bracket::print (SCM smob)
 {
-  Spanner *me = dynamic_cast<Spanner *> (unsmob_grob (smob));
+  Spanner *me = dynamic_cast<Spanner *> (Grob::unsmob (smob));
   Interval span_points;
 
   Grob *common = me->get_bound (LEFT)->common_refpoint (me->get_bound (RIGHT), X_AXIS);
@@ -79,7 +79,7 @@ Ottava_bracket::print (SCM smob)
   SCM markup = me->get_property ("text");
   Stencil text;
   if (Text_interface::is_markup (markup))
-    text = *unsmob_stencil (Text_interface::interpret_markup (layout->self_scm (),
+    text = *Stencil::unsmob (Text_interface::interpret_markup (layout->self_scm (),
                                                               properties, markup));
 
   Drul_array<Real> shorten = robust_scm2interval (me->get_property ("shorten-pair"),
@@ -119,6 +119,8 @@ Ottava_bracket::print (SCM smob)
 
       else
         span_points[d] = ext[d];
+
+      span_points[d] -= d * shorten[d];
     }
 
   /*
@@ -155,21 +157,19 @@ Ottava_bracket::print (SCM smob)
                                       Y_AXIS, Offset (bracket_span_points.length (), 0),
                                       edge_height,
                                       empty,
-                                      flare, shorten);
+                                      flare, Drul_array<Real> (0, 0));
 
   /*
-    The vertical lines should not take space, for the following scenario:
-
-    8 -----+
-    o  |
-    |
-    |
-
-
-    Just a small amount, yes.  In tight situations, it is even
-    possible to center the `8' directly below the note, dropping the
-    ottava line completely...
-
+   * The vertical lines should not take space, for the following scenario:
+   *
+   * 8 -----+
+   *     o  |
+   *    |
+   *    |
+   *
+   * Just a small amount, yes.  In tight situations, it is even
+   * possible to center the `8' directly below the note, dropping the
+   * ottava line completely...
   */
 
   b = Stencil (Box (b.extent (X_AXIS),

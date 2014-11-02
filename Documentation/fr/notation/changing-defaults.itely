@@ -1,14 +1,14 @@
 @c -*- coding: utf-8; mode: texinfo; documentlanguage: fr -*-
 
 @ignore
-    Translation of GIT committish: d46572826e777ed3e9fa4656535a6e9000f2ed9e
+    Translation of GIT committish: fab824ac128346465690246f7a42ce1e8b42db8d
 
     When revising a translation, copy the HEAD committish of the
     version that you are working on.  For details, see the Contributors'
     Guide, node Updating translation committishes..
 @end ignore
 
-@c \version "2.19.2"
+@c \version "2.19.7"
 
 @c Translators: Valentin Villenave, Jean-Charles Malahieude
 @c Translation checkers: Gilles Thibault
@@ -160,7 +160,7 @@ notamment dans le cadre du combinateur automatique de parties (voir
 
 Les définitions de sortie ont pour objet non seulement de définir la
 relation entre les contextes, mais aussi leurs réglages par défaut.  Si
-la plupart des adaptations prennent habituellement place au seind d'un
+la plupart des adaptations prennent habituellement place au sein d'un
 bloc @code{\layout}, les réglages affectant le Midi ne seront effectifs
 que s'ils interviennent au sein d'un bloc @code{\midi}.
 
@@ -803,7 +803,7 @@ responsables se nomment @code{Timing_translator} et
 peut désormais avoir sa propre métrique.
 
 @cindex polymétrique, partition
-@cindex chiffres de mesure multiples
+@cindex chiffre de mesure multiple
 
 @lilypond[quote,verbatim]
 \score {
@@ -1394,7 +1394,6 @@ relations.
 
 @seealso
 Référence des propriétés internes :
-@rinternals{Engraver_group},
 @rinternals{Note_heads_engraver},
 @rinternals{Text_engraver},
 @rinternals{Rhythmic_column_engraver},
@@ -2099,7 +2098,7 @@ doit être précédée du caractère @code{#}.
 
 Les propriétés des contextes se libellent sous la forme
 @code{minusculeMajuscule}.  Leur rôle consiste principalement à traduire
-la musique en notation : par exemple, @code{localKeySignature}
+la musique en notation : par exemple, @code{localAlterations}
 déterminera quand imprimer une altération accidentelle, et
 @code{measurePosition} quand imprimer une barre de mesure.  La valeur
 des propriétés des contextes peuvent évoluer au fur et à mesure que l'on
@@ -2434,7 +2433,7 @@ Dans l'accord suivant, les notes sont modifiées une par une :
   \tweak color #red
   d
   g
-  \tweak duration-log #1 
+  \tweak duration-log #1
    a
 >4
 -\tweak padding #8
@@ -2489,7 +2488,7 @@ produire au même instant, nous citerons :
 @item les têtes de notes au sein d'un accord,
 @item les signes d'articulation,
 @item les liaisons de prolongation sur des notes d'un accord,
-@item les crochets de nolets démarrant au même instant
+@item les crochets de n-olets démarrant au même instant
 @end itemize
 
 @c TODO add examples of these
@@ -2773,7 +2772,7 @@ valeur des clés individuellement par des déclarations imbriquées.
 
 @warning{Les déclarations imbriquées ne sont pas fonctionnelles dans le
 cas des listes associatives des propriétés de contexte -- telles
-@code{beamExceptions}, @code{keySignature},
+@code{beamExceptions}, @code{keyAlterations},
 @code{timeSignatureSettings}, etc.  Ces propriétés ne sont modifiables
 qu'au travers d'une complète redéfinition de leur liste associative.}
 
@@ -2801,7 +2800,8 @@ qu'au travers d'une complète redéfinition de leur liste associative.}
 La manière dont sera interprétée la notation contenue dans un fichier
 source dépend du mode affecté à la saisie.
 
-@strong{Mode accords}
+@subsubsubheading Mode accords
+@c VO Chord mode
 
 Ce mode, activé par la commande @code{\chordmode}, permet d'interpréter
 les saisies comme étant des accords, qui seront imprimés sous forme
@@ -2812,7 +2812,8 @@ créera un contexte @code{ChordNames}.  Les saisies, interprétées comme
 étant des accords, seront alors rendues sous forme nominale dans ce
 contexte @code{ChordNames} -- voir @ref{Impression des noms d'accord}.
 
-@strong{Mode percussions}
+@subsubsubheading Mode percussions
+@c VO Drum mode
 
 Ce mode, activé par la commande @code{\drummode}, permet d'interpréter
 les saisies comme étant de la notation pour percussions -- voir
@@ -2824,7 +2825,8 @@ créera un contexte @code{DrumStaff}.  Les saisies, interprétées comme
 forme symbolique sur une portée de percussions -- voir
 @ref{Notation de base pour percussions}.
 
-@strong{Mode figures}
+@subsubsubheading Mode figures
+@c VO Figure mode
 
 Ce mode, activé par la commande @code{\figuremode}, permet d'interpréter
 les saisies comme étant de la basse chiffrée (ou figurée) -- voir
@@ -2836,7 +2838,8 @@ créera un contexte @code{FiguredBass}.  Les saisies interprétées comme
 dans le contexte @code{FiguredBass} -- voir
 @ref{Introduction à la basse chiffrée}.
 
-@strong{Mode frets et tablatures}
+@subsubsubheading Mode frets et tablatures
+@c VO Fret and tab modes
 
 Il n'existe pas de mode spécifique pour saisir des symboles de fret ou
 de tablature.
@@ -2851,7 +2854,8 @@ surplomb d'une portée : directement à l'aide d'un contexte
 attachant aux notes des @emph{markups} créés par la commande
 @code{\fret-diagram} -- voir @ref{Tablatures sous forme d'étiquette}.
 
-@strong{Mode paroles}
+@subsubsubheading Mode paroles
+@c VO Lyrics mode
 
 Ce mode, activé par la commande @code{\lyricmode}, permet d'interpréter
 les saisies comme étant des syllabes, ayant éventuellement une durée, et
@@ -2862,16 +2866,16 @@ créera un contexte @code{Lyrics} et ajoutera implicitement une commande
 @code{\lyricsto} afin d'associer les paroles qui suivent à la musique
 précédemment saisie.
 
-@strong{Mode @emph{markup}}
+@subsubsubheading Mode @emph{markup}
+@c VO Markup mode
 
 Ce mode, activé par la commande @code{\markup}, permet d'interpréter les
 saisies comme étant des @emph{markups} (annotations ou étiquettes) --
 voir @ref{Commandes pour markup}.
 
 
-@c silly work-around for texinfo broken-ness
-@c (@strong{Note...} causes a spurious cross-reference in Info)
-@b{Mode notes}
+@subsubsubheading Mode notes
+@c VO Note mode
 
 Le mode notes est le mode par défaut dans LilyPond.  Il peut aussi
 s'activer par la commande @code{\notemode}.  Les saisies seront
@@ -2883,21 +2887,6 @@ dans certaines situations particulières, notamment lorsque vous êtes en
 mode paroles, accords, ou tout autre mode, et que vous deviez insérer
 un élément qui ne serait disponible que grâce à la syntaxe du mode
 notes.
-
-Il en va ainsi lorsque, par exemple, vous voulez ajouter une indication
-de nuance au numéro de couplet d'un chant choral :
-
-@lilypond[verbatim,relative=2,quote]
-{ c4 c4 c4 c4 }
-\addlyrics {
-  \notemode{\set stanza = \markup{ \dynamic f 1. } }
-  To be sung loudly
-}
-\addlyrics {
-  \notemode{\set stanza = \markup{ \dynamic p 2. } }
-  To be sung quietly
-}
-@end lilypond
 
 
 @node Direction et positionnement
@@ -3136,7 +3125,7 @@ par ce réglage.
 
 De nombreux objets de notation musicale s'étendent sur plusieurs notes,
 voire même sur plusieurs mesures.  Il en va ainsi des liaisons,
-ligatures, crochets de nolet, crochets de reprise, crescendos, trilles
+ligatures, crochets de n-olet, crochets de reprise, crescendos, trilles
 ou glissandos.  Ces objets, que l'on englobe sous l'appellation
 @qq{d'extenseur}, sont pourvus de propriétés spécifiques destinées à
 contrôler leur apparence et leur comportement.  Un certain nombre de ces
@@ -3266,7 +3255,7 @@ e8 e e e
 
 @strong{@i{La propriété @code{to-barline}}}
 
-La seconde propriété fournie par la @code{spanner-interface} est 
+La seconde propriété fournie par la @code{spanner-interface} est
 @code{to-barline}.  Elle est activée par défaut, raison pour laquelle
 les soufflets et autres extenseurs finissant sur la première note d'une
 mesure s'arrêtent visuellement au niveau de la barre de mesure qui la
@@ -3817,7 +3806,7 @@ Manuel d'initiation :
 @subsection Styles de ligne
 @translationof Line styles
 
-Certaines indications portées à l'attention de l'exécutant -- tels 
+Certaines indications portées à l'attention de l'exécutant -- tels
 @i{rallentando}, @i{accelerando} et @i{trilles} -- apparaissent sous la
 forme d'un texte qui peut s'étendre sur plusieurs mesures à l'aide d'une
 ligne parfois pointillée ou ondulée.
@@ -5027,4 +5016,3 @@ tempoPadded =
 @end lilypond
 
 @c TODO: add appropriate @@ref's here.
-

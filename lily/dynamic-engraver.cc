@@ -208,12 +208,12 @@ Dynamic_engraver::stop_translation_timestep ()
   if (finished_spanner_ && !finished_spanner_->get_bound (RIGHT))
     finished_spanner_
     ->set_bound (RIGHT,
-                 unsmob_grob (get_property ("currentMusicalColumn")));
+                 Grob::unsmob (get_property ("currentMusicalColumn")));
 
   if (current_spanner_ && !current_spanner_->get_bound (LEFT))
     current_spanner_
     ->set_bound (LEFT,
-                 unsmob_grob (get_property ("currentMusicalColumn")));
+                 Grob::unsmob (get_property ("currentMusicalColumn")));
   script_ = 0;
   script_event_ = 0;
   accepted_spanevents_drul_.set (0, 0);
@@ -261,17 +261,14 @@ Dynamic_engraver::acknowledge_note_column (Grob_info info)
     {
       extract_grob_set (info.grob (), "note-heads", heads);
       /*
-        Spacing constraints may require dynamics to be aligned on rests,
+        Spacing constraints may require dynamics to be attached to rests,
         so check for a rest if this note column has no note heads.
       */
       Grob *x_parent = (heads.size ()
-                        ? heads[0]
-                        : unsmob_grob (info.grob ()->get_object ("rest")));
+                        ? info.grob ()
+                        : Grob::unsmob (info.grob ()->get_object ("rest")));
       if (x_parent)
-        {
-          script_->set_parent (x_parent, X_AXIS);
-          Self_alignment_interface::set_center_parent (script_, X_AXIS);
-        }
+        script_->set_parent (x_parent, X_AXIS);
     }
 
   if (current_spanner_ && !current_spanner_->get_bound (LEFT))

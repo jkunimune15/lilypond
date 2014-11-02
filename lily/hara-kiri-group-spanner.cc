@@ -30,7 +30,7 @@ MAKE_SCHEME_CALLBACK (Hara_kiri_group_spanner, y_extent, 1);
 SCM
 Hara_kiri_group_spanner::y_extent (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   consider_suicide (me);
   return Axis_group_interface::generic_group_extent (me, Y_AXIS);
 }
@@ -39,7 +39,7 @@ MAKE_SCHEME_CALLBACK (Hara_kiri_group_spanner, calc_skylines, 1);
 SCM
 Hara_kiri_group_spanner::calc_skylines (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   consider_suicide (me);
   return Axis_group_interface::calc_skylines (smob);
 }
@@ -48,7 +48,7 @@ MAKE_SCHEME_CALLBACK (Hara_kiri_group_spanner, pure_height, 3);
 SCM
 Hara_kiri_group_spanner::pure_height (SCM smob, SCM start_scm, SCM end_scm)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   int start = robust_scm2int (start_scm, 0);
   int end = robust_scm2int (end_scm, INT_MAX);
 
@@ -77,6 +77,11 @@ bool find_in_range (SCM vector, int low, int hi, int min, int max)
 bool
 Hara_kiri_group_spanner::request_suicide (Grob *me, int start, int end)
 {
+  extract_grob_set (me, "make-dead-when", foes);
+  for (vsize i = 0; i < foes.size (); i++)
+    if (foes[i]->is_live () && !request_suicide_alone (foes[i], start, end))
+      return true;
+
   if (!request_suicide_alone (me, start, end))
     return false;
 
@@ -162,7 +167,7 @@ MAKE_SCHEME_CALLBACK (Hara_kiri_group_spanner, force_hara_kiri_callback, 1);
 SCM
 Hara_kiri_group_spanner::force_hara_kiri_callback (SCM smob)
 {
-  Grob *me = unsmob_grob (smob);
+  Grob *me = Grob::unsmob (smob);
   consider_suicide (me);
   return scm_from_double (0.0);
 }
@@ -171,7 +176,7 @@ MAKE_SCHEME_CALLBACK (Hara_kiri_group_spanner, force_hara_kiri_in_y_parent_callb
 SCM
 Hara_kiri_group_spanner::force_hara_kiri_in_y_parent_callback (SCM smob)
 {
-  Grob *daughter = unsmob_grob (smob);
+  Grob *daughter = Grob::unsmob (smob);
   force_hara_kiri_callback (daughter->get_parent (Y_AXIS)->self_scm ());
   return scm_from_double (0.0);
 }
@@ -185,13 +190,16 @@ Hara_kiri_group_spanner::add_interesting_item (Grob *me, Grob *n)
 ADD_INTERFACE (Hara_kiri_group_spanner,
                "A group spanner that keeps track of interesting items.  If it"
                " doesn't contain any after line breaking, it removes itself"
-               " and all its children.",
+               " and all its children.  Children may be prioritized in layers"
+               " via @code{remove-layer}, in which case only the"
+               " lowest-numbered non-empty layer is retained.",
 
                /* properties */
                "items-worth-living "
                "important-column-ranks "
                "keep-alive-with "
+               "make-dead-when "
                "remove-empty "
                "remove-first "
+               "remove-layer "
               );
-
