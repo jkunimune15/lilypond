@@ -148,18 +148,10 @@ Beaming_pattern::beamify (Beaming_options const &options)
   for (vsize i = 0; i < infos_.size (); i++)
     flag_directions.push_back (flag_direction (options, i));
 
-  // Correct flag directions for subdivision
-  for (vsize i = 1; i < infos_.size () - 1; i++)
-    {
-      if ((flag_directions[i] == CENTER) && (flag_directions[i - 1] == LEFT))
-        flag_directions[i] = RIGHT;
-      if ((flag_directions[i] == CENTER) && (flag_directions[i + 1] == RIGHT))
-        flag_directions[i] = LEFT;
-    }
-
   // Set the count on each side of the stem
     for (vsize i = 1; i < infos_.size () - 1; i++)
       {
+
         Direction non_flag_dir = -flag_directions[i];
         if (non_flag_dir)
           {
