@@ -143,16 +143,11 @@ Beaming_pattern::beamify (Beaming_options const &options)
 
   find_rhythmic_importance (options);
 
-  vector <Direction> flag_directions;
-  // Get the initial flag directions
-  for (vsize i = 0; i < infos_.size (); i++)
-    flag_directions.push_back (flag_direction (options, i));
-
   // Set the count on each side of the stem
     for (vsize i = 1; i < infos_.size () - 1; i++)
       {
 
-        Direction non_flag_dir = -flag_directions[i];
+        Direction non_flag_dir = -flag_direction (options, i);
         if (non_flag_dir)
           {
             int count =
