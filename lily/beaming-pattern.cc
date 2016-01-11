@@ -77,14 +77,11 @@ Beam_rhythmic_element::count (Direction d) const
   hang below the neighbouring flags. If
   the stem has no more flags than either of its neighbours, this returns
   CENTER.
+  Do not call this with 0 or infos_.size ()!
 */
 Direction
 Beaming_pattern::flag_direction (Beaming_options const &options, vsize i) const
 {
-  // The extremal stems shouldn't be messed with, so it's appropriate to
-  // return CENTER here also.
-  if (i == 0 || i == infos_.size () - 1)
-    return CENTER;
 
   int count = infos_[i].count (LEFT); // Both directions should still be the same
   int left_count = infos_[i - 1].count (RIGHT);
@@ -150,6 +147,7 @@ Beaming_pattern::beamify (Beaming_options const &options)
         Direction flag_dir = flag_direction (options, i);
         if (flag_dir)
           {
+            // Only process beam count if a flag direction is set
             int count =
                 (infos_[i + 1].rhythmic_importance_ < 0 &&
                  options.subdivide_beams_)
