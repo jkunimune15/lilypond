@@ -140,36 +140,36 @@ Beaming_pattern::beamify (Beaming_options const &options)
 
   find_rhythmic_importance (options);
 
-  // Set the count on each side of the stem
-    for (vsize i = 1; i < infos_.size () - 1; i++)
-      {
+  // Process the stems of a beam, excluding the extremals
+  for (vsize i = 1; i < infos_.size () - 1; i++)
+    {
 
-        Direction flag_dir = flag_direction (options, i);
-        if (flag_dir)
-          {
-            // Only process beam count if a flag direction is set
-            int count =
-                (infos_[i + 1].rhythmic_importance_ < 0 &&
-                 options.subdivide_beams_)
-                        // we're left of a subdivision
-                ?  (i != infos_.size () - 2)
-                   // respect the beam count for shortened beams ...
-                   ? max (beam_count_for_rhythmic_position (i + 1),
-                          beam_count_for_length (remaining_length (i + 1)))
-                   // ... except if there's only one trailing stem
-                   : beam_count_for_rhythmic_position (i + 1)
+      Direction flag_dir = flag_direction (options, i);
+      if (flag_dir)
+        {
+          // Only process beam count if a flag direction is set
+          int count =
+              (infos_[i + 1].rhythmic_importance_ < 0 &&
+               options.subdivide_beams_)
+              // we're left of a subdivision
+              ?  (i != infos_.size () - 2)
+                 // respect the beam count for shortened beams ...
+                 ? max (beam_count_for_rhythmic_position (i + 1),
+                        beam_count_for_length (remaining_length (i + 1)))
+                 // ... except if there's only one trailing stem
+                 : beam_count_for_rhythmic_position (i + 1)
 
-                // we're at any other stem
-                : min (min (infos_[i].count (-flag_dir),
-                            infos_[i - flag_dir].count (flag_dir)),
-                       infos_[i + flag_dir].count (- flag_dir));
+              // we're at any other stem
+              : min (min (infos_[i].count (-flag_dir),
+                          infos_[i - flag_dir].count (flag_dir)),
+                     infos_[i + flag_dir].count (- flag_dir));
 
-            // Ensure at least one beam is left, even for groups longer than 1/8
-            count = max (count, 1);
+          // Ensure at least one beam is left, even for groups longer than 1/8
+          count = max (count, 1);
 
-            infos_[i].beam_count_drul_[-flag_dir] = count;
-          }
-      }
+          infos_[i].beam_count_drul_[-flag_dir] = count;
+        }
+    }
 }
 
 /*
