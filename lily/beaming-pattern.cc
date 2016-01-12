@@ -39,6 +39,9 @@ Beam_rhythmic_element::Beam_rhythmic_element ()
   rhythmic_importance_ = 0;
   beam_count_drul_[LEFT] = 0;
   beam_count_drul_[RIGHT] = 0;
+  beam_count_for_length_ = 0;
+  subdivisions_[LEFT] = false;
+  subdivisions_[RIGHT] = false;
   invisible_ = false;
   factor_ = Rational (1);
   tuplet_start_ = false;
@@ -51,6 +54,9 @@ Beam_rhythmic_element::Beam_rhythmic_element (Moment m, int i, bool inv,
   rhythmic_importance_ = 0;
   beam_count_drul_[LEFT] = i;
   beam_count_drul_[RIGHT] = i;
+  beam_count_for_length_ = i;
+  subdivisions_[LEFT] = false;
+  subdivisions_[RIGHT] = false;
   invisible_ = inv;
   factor_ = factor;
   tuplet_start_ = tuplet_start;
@@ -74,44 +80,45 @@ Beam_rhythmic_element::count (Direction d) const
 
 /*
   Finds the appropriate direction for the flags at the given index that
-  hang below the neighbouring flags. If
+  hang below the neighbouring flags.  Sets beam_counts to the minimal possible
+  amount, while beamlets have to be added later if necessary. If
   the stem has no more flags than either of its neighbours, this returns
   CENTER.
   Do not call this with 0 or infos_.size ()!
 */
 Direction
-Beaming_pattern::flag_direction (Beaming_options const &options, vsize i) const
+Beaming_pattern::flag_direction (vsize i,
+                                 Drul_array<int>& beam_counts,
+                                 bool strict_beat_beaming) const
 {
 
-  int count = infos_[i].count (LEFT); // Both directions should still be the same
-  int left_count = infos_[i - 1].count (RIGHT);
-  int right_count = infos_[i + 1].count (LEFT);
+  int count = infos_[i].beam_count_for_length_;
+  Direction flag_dir = CENTER;
 
-  // If we are told to subdivide beams and we are next to a beat, point the
-  // beamlet away from the beat.
-  if (options.subdivide_beams_)
-    {
-      if (infos_[i].rhythmic_importance_ < 0)
-        return RIGHT;
-      else if (infos_[i + 1].rhythmic_importance_ < 0)
-        return LEFT;
-    }
+  // Initially set beamlet counts to the possible minimum wrt to the neighbors
+  beam_counts[RIGHT] = min (count, infos_[i + 1].count (LEFT));
+  beam_counts[LEFT] = min (count, infos_[i - 1].count (RIGHT));
 
-  if (count <= left_count && count <= right_count)
+  // Are there hanging beams at all?
+  if (count <= beam_counts[LEFT] && count <= beam_counts[RIGHT])
     return CENTER;
-  else if (!options.strict_beat_beaming_)
+
+  if (!strict_beat_beaming)
     {
       // Try to avoid sticking-out flags as much as possible by pointing
       // my flags at the neighbor with the most flags.
-      if (right_count > left_count)
+      if (beam_counts[RIGHT] > beam_counts[LEFT])
         return RIGHT;
-      else if (left_count > right_count)
+      else if (beam_counts[LEFT] > beam_counts[RIGHT])
         return LEFT;
     }
 
-  // If all else fails, point the beamlet away from the important moment.
-  return (infos_[i].rhythmic_importance_ < infos_[i + 1].rhythmic_importance_)
-         ? RIGHT : LEFT;
+  //  => (strict_beat_beaming || beam_counts[RIGHT] == beam_counts[LEFT])
+  return
+    (infos_[i].rhythmic_importance_ == infos_[i + 1].rhythmic_importance_)
+    ? CENTER
+    : (infos_[i].rhythmic_importance_ < infos_[i + 1].rhythmic_importance_)
+      ? RIGHT : LEFT;
 }
 
 void
@@ -123,53 +130,110 @@ Beaming_pattern::de_grace ()
     }
 }
 
+/*
+  Process the beaming pattern and determine beam count
+  right and left of all stems.  Respect strictBeatBeaming and subdivideBeams.
+*/
 void
 Beaming_pattern::beamify (Beaming_options const &options)
 {
   if (infos_.size () <= 1)
     return;
 
-  unbeam_invisible_stems ();
-
-  if (infos_[0].start_moment_.grace_part_)
+  // Treat grace-d beams like normal durations for subdivided beams
+  if (options.subdivide_beams_ && infos_[0].start_moment_.grace_part_)
     de_grace ();
 
+  // "shift" beams in partial bars by one measure to a positive start_moment
   if (infos_[0].start_moment_ < Moment (0))
     for (vsize i = 0; i < infos_.size (); i++)
       infos_[i].start_moment_ += options.measure_length_;
 
+  // If beams are subdivided we'll handle beam count surrounding
+  // invisible stems individually.
+  if (!options.subdivide_beams_)
+    unbeam_invisible_stems ();
+
   find_rhythmic_importance (options);
 
-  // Process the stems of a beam, excluding the extremals
+  Drul_array<int> beam_counts;
+  Direction flag_dir = CENTER;
+
+
+  // Iterate over stems, excluding the extremals
   for (vsize i = 1; i < infos_.size () - 1; i++)
     {
+      // Initialize beam count based on duration of the current stem
+      beam_counts[LEFT] = infos_[i].beam_count_for_length_;
+      beam_counts[RIGHT] = beam_counts[LEFT];
 
-      Direction flag_dir = flag_direction (options, i);
-      if (flag_dir)
+      // Determine subdivisions left and right of the current stem
+      if (options.subdivide_beams_)
+        find_subdivisions (i);
+
+      // Process beamlets around subdivisions
+      if (options.subdivide_beams_ && at_subdivision (i))
         {
-          // Only process beam count if a flag direction is set
-          int count =
-              (infos_[i + 1].rhythmic_importance_ < 0 &&
-               options.subdivide_beams_)
-              // we're left of a subdivision
-              ?  (i != infos_.size () - 2)
-                 // respect the beam count for shortened beams ...
-                 ? max (beam_count_for_rhythmic_position (i + 1),
-                        beam_count_for_length (remaining_length (i + 1)))
-                 // ... except if there's only one trailing stem
-                 : beam_count_for_rhythmic_position (i + 1)
+          if (infos_[i].subdivisions_[LEFT])
+            {
+              beam_counts[RIGHT] =
+                (i != infos_.size () - 2)
+                  // Respect the beam count for shortened beams ...
+                  ? max (beam_count_for_rhythmic_position (i + 1),
+                         beam_count_for_length (remaining_length (i + 1)))
+                  // ... except if there's only one trailing stem
+                  : beam_count_for_rhythmic_position (i + 1);
+              beam_counts[LEFT] = max (infos_[i - 1].count (RIGHT),
+                                beam_count_for_rhythmic_position (i));
 
-              // we're at any other stem
-              : min (min (infos_[i].count (-flag_dir),
-                          infos_[i - flag_dir].count (flag_dir)),
-                     infos_[i + flag_dir].count (- flag_dir));
+              // if we're at a rest and strictBeatBeaming is set
+              // have beamlets stick out to the rest, otherwise suppress them
+              if (infos_[i].invisible_ && !options.strict_beat_beaming_)
+                infos_[i - 1].beam_count_drul_[RIGHT] = beam_counts[RIGHT];
+            }
+          else
+            // We're right of a subdivision:
+            // Take beam number from the previous stem
+            beam_counts[LEFT] = infos_[i - 1].count (RIGHT);
 
-          // Ensure at least one beam is left, even for groups longer than 1/8
-          count = max (count, 1);
-
-          infos_[i].beam_count_drul_[-flag_dir] = count;
         }
+      // Process stems not around subdivisions (incl. non-divided beams)
+      else
+        {
+          flag_dir = flag_direction (i, beam_counts,
+                                     options.strict_beat_beaming_);
+
+          if (flag_dir)
+            // Left and right beam counts are different
+            {
+              // Add beamlets to the flag side if necessary
+              beam_counts[flag_dir] = max (beam_counts[flag_dir],
+                                           infos_[i].beam_count_for_length_);
+
+            if (options.strict_beat_beaming_)
+              {
+                // Set opposite side of a "strict" beamlet to 1
+                beam_counts[-flag_dir] = 1;
+              }
+            }
+        }
+
+      // Apply beam counts, ensuring at least one beam is left
+      infos_[i].beam_count_drul_[LEFT] = max (1, beam_counts[LEFT]);
+      infos_[i].beam_count_drul_[RIGHT] = max (1, beam_counts[RIGHT]);
     }
+
+    // handle rests under extremal stems
+    if (infos_[infos_.size () - 1].invisible_ && !options.strict_beat_beaming_)
+      {
+        infos_[infos_.size () - 1].beam_count_drul_[LEFT] = 1;
+        infos_[infos_.size () - 2].beam_count_drul_[RIGHT] = 1;
+      }
+    if (infos_[0].invisible_ && !options.strict_beat_beaming_)
+      {
+        infos_[0].beam_count_drul_[RIGHT] = 1;
+        infos_[1].beam_count_drul_[LEFT] = 1;
+      }
 }
 
 /*
@@ -332,6 +396,18 @@ Beaming_pattern::Beaming_pattern ()
 {
 }
 
+bool
+Beaming_pattern::at_subdivision (int i)
+{
+  return (infos_[i].subdivisions_[LEFT] || infos_[i].subdivisions_[RIGHT]);
+}
+
+void
+Beaming_pattern::find_subdivisions (int i)
+{
+  infos_[i].subdivisions_[LEFT] = (infos_[i + 1].rhythmic_importance_ < 0);
+  infos_[i].subdivisions_[RIGHT] = (infos_[i].rhythmic_importance_ < 0);
+}
 int
 Beaming_pattern::beamlet_count (int i, Direction d) const
 {
@@ -358,7 +434,21 @@ Beaming_pattern::end_moment (int i) const
 Moment
 Beaming_pattern::remaining_length (int i) const
 {
-    return end_moment (infos_.size () - 1) - infos_[i].start_moment_;
+// The following loop isn't currently used.
+// if not needed it has to be removed before merging
+  int next_rest (0);
+  for (int j = i + 1; j < infos_.size (); j++)
+    {
+      if (infos_[j].invisible_)
+        {
+          next_rest = j;
+          break;
+        }
+    }
+    return //(next_rest)
+          // ? infos_[next_rest].start_moment_ - infos_[i].start_moment_
+        //   :
+           end_moment (infos_.size () - 1) - infos_[i].start_moment_;
 }
 
 int

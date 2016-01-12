@@ -48,6 +48,9 @@ struct Beam_rhythmic_element
 
   bool tuplet_start_;
 
+  int beam_count_for_length_;
+  Drul_array<bool> subdivisions_;
+
   Beam_rhythmic_element (Moment, int, bool, Rational, bool);
   Beam_rhythmic_element ();
 
@@ -77,9 +80,13 @@ public:
 
 private:
   vector<Beam_rhythmic_element> infos_;
-  Direction flag_direction (Beaming_options const &, vsize) const;
+  Direction flag_direction (vsize i,
+                            Drul_array<int>& beam_counts,
+                            bool strict_beat_beaming) const;
   void find_rhythmic_importance (Beaming_options const &);
   void unbeam_invisible_stems ();
+  bool at_subdivision (int i);
+  void find_subdivisions (int i);
   Moment remaining_length (int idx) const;
   int beam_count_for_rhythmic_position (int idx) const;
   int beam_count_for_length (Moment len) const;
