@@ -29,6 +29,7 @@ struct Beaming_options
   SCM grouping_;
   bool subdivide_beams_;
   bool strict_beat_beaming_;
+  bool subdivide_at_strict_beat_beaming_;
   Moment base_moment_;
   Moment measure_length_;
 
@@ -85,11 +86,11 @@ private:
                             bool strict_beat_beaming) const;
   void find_rhythmic_importance (Beaming_options const &);
   void unbeam_invisible_stems ();
-  bool at_subdivision (int i);
-  void find_subdivisions (int i);
+  bool find_subdivisions (int i);
   Moment remaining_length (int idx) const;
   int beam_count_for_rhythmic_position (int idx) const;
   int beam_count_for_length (Moment len) const;
+  int beam_count_for_subdivision (vsize i) const;
 };
 
 #endif /* BEAMING_PATTERN_HH */
