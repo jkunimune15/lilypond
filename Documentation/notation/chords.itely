@@ -848,11 +848,12 @@ In figure mode, a group of bass figures is delimited by
 @end lilypond
 
 
-Accidentals (including naturals) can be added to figures:
+Accidentals (including naturals) can be added to figures or printed
+on their own:
 
 @lilypond[verbatim,quote,ragged-right]
 \figures {
-  <7! 6+ 4-> <5++> <3-->
+  <7! 6+ 4-> <5++> <3--> < _+ > < 7 _!>
 }
 @end lilypond
 
