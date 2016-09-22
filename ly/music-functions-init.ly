@@ -1634,45 +1634,110 @@ a context modification duplicating their effect.")
      mods))
 
 shape =
-#(define-music-function (offsets item)
-   (list? key-list-or-music?)
+#(define-music-function (ann? offsets item)
+   ((boolean?) list? key-list-or-music?)
    (_i "Offset control-points of @var{item} by @var{offsets}.  The
-argument is a list of number pairs or list of such lists.  Each
-element of a pair represents an offset to one of the coordinates of a
-control-point.  If @var{item} is a string, the result is
+ @var{offsets} argument is a list of number pairs or list of such lists.
+Each element of a pair represents an offset to one of the coordinates of
+a control-point.  If @var{item} is a string, the result is
 @code{\\once\\override} for the specified grob type.  If @var{item} is
 a music expression, the result is the same music expression with an
-appropriate tweak applied.")
-   (define (shape-curve grob coords)
-     (let* ((orig (ly:grob-original grob))
-            (siblings (if (ly:spanner? grob)
-                          (ly:spanner-broken-into orig) '()))
-            (total-found (length siblings)))
-       (define (offset-control-points offsets)
-         (if (null? offsets)
-             coords
-             (map
-               (lambda (x y) (coord-translate x y))
-               coords offsets)))
+appropriate tweak applied.  If the optional first argument @var{ann} is
+present and set to @code{##t} the control points, the original shape
+and lines visualizing the offsets are printed to simplify finding
+appropriate values for @var{offsets}.")
+   (let ((new-cps '())
+         (col-orig-slur '(.8 .8 .8))
+         (col-new-slur red)
+         (conn-thickness .05)
+         (cross-thickness .1)
+         (cross-size .2))
+     (define (make-cross-stencil coord)
+       (ly:stencil-add
+        (make-line-stencil
+         cross-thickness
+         (- (car coord) cross-size)
+         (- (cdr coord) cross-size)
+         (+ (car coord) cross-size)
+         (+ (cdr coord) cross-size))
+        (make-line-stencil
+         cross-thickness
+         (- (car coord) cross-size)
+         (+ (cdr coord) cross-size)
+         (+ (car coord) cross-size)
+         (- (cdr coord) cross-size))))
+     (define (connect-points origin pt)
+       (ly:stencil-add
+        (make-line-stencil conn-thickness
+          (car origin) (cdr origin) (car pt) (cdr pt))))
+     (define (annotate-curve cps)
+        (ly:stencil-add
+         (connect-points (first cps) (second cps))
+         (connect-points (fourth cps) (third cps))
+         (make-cross-stencil (second cps))
+         (make-cross-stencil (third cps))))
 
-       (define (helper sibs offs)
-         (if (pair? offs)
-             (if (eq? (car sibs) grob)
-                 (offset-control-points (car offs))
-                 (helper (cdr sibs) (cdr offs)))
-             coords))
+     (define (annotated-curve grob)
+       (let ((orig-cps (ly:slur::calc-control-points grob))
+             (orig-slur grob))
+         (ly:stencil-add
+          (stencil-with-color
+           (ly:stencil-add
+            (begin
+             (ly:grob-set-property! orig-slur 'control-points orig-cps)
+             (ly:grob-set-property! orig-slur 'layer -1)
+             (ly:slur::print orig-slur))
+            (annotate-curve orig-cps)
+            (apply ly:stencil-add
+              (map connect-points orig-cps new-cps)))
+           col-orig-slur)
+          (stencil-with-color
+           (ly:stencil-add
+            (begin
+             (ly:grob-set-property! grob 'control-points new-cps)
+             (ly:slur::print grob))
+           (annotate-curve new-cps))
+           col-new-slur))))
 
-       ;; we work with lists of lists
-       (if (or (null? offsets)
-               (not (list? (car offsets))))
-           (set! offsets (list offsets)))
+     (define (shape-curve grob coords)
+       (let* ((orig (ly:grob-original grob))
+              (siblings (if (ly:spanner? grob)
+                            (ly:spanner-broken-into orig) '()))
+              (total-found (length siblings)))
+         (define (offset-control-points offsets)
+           (let ((cps
+                  (if (null? offsets)
+                      coords
+                      (map
+                       (lambda (x y) (coord-translate x y))
+                       coords offsets))))
+             (set! new-cps cps)
+             cps))
 
-       (if (>= total-found 2)
-           (helper siblings offsets)
-           (offset-control-points (car offsets)))))
-   (once (propertyTweak 'control-points
-                        (grob-transformer 'control-points shape-curve)
-                        item)))
+         (define (helper sibs offs)
+           (if (pair? offs)
+               (if (eq? (car sibs) grob)
+                   (offset-control-points (car offs))
+                   (helper (cdr sibs) (cdr offs)))
+               coords))
+
+         ;; we work with lists of lists
+         (if (or (null? offsets)
+                 (not (list? (car offsets))))
+             (set! offsets (list offsets)))
+
+         (if (>= total-found 2)
+             (helper siblings offsets)
+             (offset-control-points (car offsets)))))
+     #{
+       #@(list
+          (once (propertyTweak 'control-points
+                  (grob-transformer 'control-points shape-curve)
+                  item))
+          (if ann?
+              (once (propertyTweak 'stencil annotated-curve item))
+              #{ #}))
+     #}))
 
 shiftDurations =
 #(define-music-function (dur dots arg)
