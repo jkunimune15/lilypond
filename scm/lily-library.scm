@@ -888,6 +888,54 @@ and will be applied to NUM."
     (fancy-format #f (car custom-format) num))
    (else (fancy-format #f "~(~@r~)" num))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; lilypond version
+
+(define (calculate-version ref-version)
+  "Return an integer representation of the LilyPond version,
+   can be compared with the operators."
+  (let*
+   ((v-list
+     (if (number-list? ref-version)
+         (map truncate ref-version)
+         (map string->number (string-split ref-version #\.))))
+    (use-list
+     (list-head
+      (append v-list (make-list (max 0 (- 3 (length v-list))) 0)) 3)))
+   (+ (* 1000000 (first use-list))
+     (* 1000 (second use-list))
+     (third use-list))))
+
+(define-public (lilypond>? ref-version)
+  "Return #t if the executed LilyPond version
+   is greater than the given @var{ref-version}"
+  (> (calculate-version (ly:version))
+     (calculate-version ref-version)))
+
+(define-public (lilypond>=? ref-version)
+  "Return #t if the executed LilyPond version
+   is greater than or equal to the given @var{ref-version}"
+  (>= (calculate-version (ly:version))
+      (calculate-version ref-version)))
+
+(define-public (lilypond<? ref-version)
+  "Return #t if the executed LilyPond version
+   is less than the given @var{ref-version}"
+  (< (calculate-version (ly:version))
+     (calculate-version ref-version)))
+
+(define-public (lilypond<=? ref-version)
+  "Return #t if the executed LilyPond version
+   is less than or equal to @var{ref-version}"
+  (<= (calculate-version (ly:version))
+      (calculate-version ref-version)))
+
+(define-public (lilypond=? ref-version)
+  "Return #t if the executed LilyPond version
+   is equal to @var{ref-version}"
+  (= (calculate-version (ly:version))
+     (calculate-version ref-version)))
+
 ;;;;;;;;;;;;;;;;
 ;; other
 
