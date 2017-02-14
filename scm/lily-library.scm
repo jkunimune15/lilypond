@@ -891,50 +891,20 @@ and will be applied to NUM."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; lilypond version
 
-(define (calculate-version ref-version)
-  "Return an integer representation of the LilyPond version,
-   can be compared with the operators."
-  (let*
-   ((v-list
-     (if (number-list? ref-version)
-         (map truncate ref-version)
-         (map string->number (string-split ref-version #\.))))
-    (use-list
-     (list-head
-      (append v-list (make-list (max 0 (- 3 (length v-list))) 0)) 3)))
-   (+ (* 1000000 (first use-list))
-     (* 1000 (second use-list))
-     (third use-list))))
-
-(define-public (lilypond>? ref-version)
-  "Return #t if the executed LilyPond version
-   is greater than the given @var{ref-version}"
-  (> (calculate-version (ly:version))
-     (calculate-version ref-version)))
-
-(define-public (lilypond>=? ref-version)
-  "Return #t if the executed LilyPond version
-   is greater than or equal to the given @var{ref-version}"
-  (>= (calculate-version (ly:version))
-      (calculate-version ref-version)))
-
-(define-public (lilypond<? ref-version)
-  "Return #t if the executed LilyPond version
-   is less than the given @var{ref-version}"
-  (< (calculate-version (ly:version))
-     (calculate-version ref-version)))
-
-(define-public (lilypond<=? ref-version)
-  "Return #t if the executed LilyPond version
-   is less than or equal to @var{ref-version}"
-  (<= (calculate-version (ly:version))
-      (calculate-version ref-version)))
-
-(define-public (lilypond=? ref-version)
-  "Return #t if the executed LilyPond version
-   is equal to @var{ref-version}"
-  (= (calculate-version (ly:version))
-     (calculate-version ref-version)))
+(define (version-compare? v1 op v2)
+  "Compare two versions @var{v1} and @var{v2} with the operator @var{op}.
+   The versions are lists of numbers like @code{'(2 18 0)}.  The operator
+   would typically be <, >, <=, >=, =, etc."
+  (let loop ((v1 v1) (v2 v2))
+    (let* ((a (car v1)) (b (car v2))
+            (axb (op a b)) (bxa (op b a)))
+      (if (eq? axb bxa)
+          (cond
+           ((not axb) #f)
+           ((and (null? (cdr v1)) (null? (cdr v2))) axb)
+           ((not (eq? (null? (cdr v1)) (null? (cdr v2)))) (op 0 0))
+           (else (loop (cdr v1) (cdr v2))))
+          axb))))
 
 ;;;;;;;;;;;;;;;;
 ;; other
