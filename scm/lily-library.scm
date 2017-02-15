@@ -891,20 +891,27 @@ and will be applied to NUM."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; lilypond version
 
-(define (version-compare? v1 op v2)
-  "Compare two versions @var{v1} and @var{v2} with the operator @var{op}.
-   The versions are lists of numbers like @code{'(2 18 0)}.  The operator
-   would typically be <, >, <=, >=, =, etc."
-  (let loop ((v1 v1) (v2 v2))
-    (let* ((a (car v1)) (b (car v2))
-            (axb (op a b)) (bxa (op b a)))
-      (if (eq? axb bxa)
-          (cond
-           ((not axb) #f)
-           ((and (null? (cdr v1)) (null? (cdr v2))) axb)
-           ((not (eq? (null? (cdr v1)) (null? (cdr v2)))) (op 0 0))
-           (else (loop (cdr v1) (cdr v2))))
-          axb))))
+(define (version-list-compare? op a b)
+  "Lexicographically compare to lists @var{a} and @var{b} using
+   the operator @var{op}. The types of the list elements have to
+   be comparable with @var{op}. If the lists are of different length
+   the trailing elements of the longer list are ignored."
+  (let* ((ca (car a))
+         (iseql (op ca ca)))
+    (let loop ((ca ca) (cb (car b)) (a (cdr a)) (b (cdr b)))
+      (let ((axb (op ca cb)))
+        (if (and (pair? a) (pair? b)
+                 (eq? axb iseql (op cb ca)))
+            (loop (car a) (car b) (cdr a) (cdr b))
+            axb)))))
+
+(define (ly:version? op . ver)
+  "Compare the currently executed LilyPond version with a given version
+   @var{ver} using the operator @var{op}. @var{ver} may be passed as a
+   sequence or a list of numbers with up to three elements."
+  (version-list-compare? op (ly:version)
+    (if (and (= 1 (length ver)) (list? (car ver)))
+        (car ver) ver)))
 
 ;;;;;;;;;;;;;;;;
 ;; other
