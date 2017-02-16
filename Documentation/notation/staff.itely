@@ -785,6 +785,49 @@ elements.}
 >>
 @end lilypond
 
+By default any empty staff can be frenched, but sometimes staff groups
+are linked and should only be hidden together when @emph{all} staves are
+empty at the same time.  This behaviour is the default for
+@code{PianoStaff} where empty staves are usually continued.  The
+@code{Keep_alive_together_engraver} which is responsible for this can be
+removed from the @code{PianoStaff} context to allow individual staves to
+be frenched.  This is for example useful in complex piano music that
+features sections with two or more staves.
+
+@lilypond[verbatim,quote,ragged-right]
+\layout {
+  \context {
+    \Staff
+    \RemoveEmptyStaves
+  }
+  \context {
+    \PianoStaff
+    \remove "Keep_alive_together_engraver"
+  }
+}
+
+\relative <<
+  \new PianoStaff <<
+    \new Staff {
+      e'4 f g a \break
+      b1 \break
+      a4 b c2
+    }
+    \new Staff {
+      c,4 d e f \break
+      R1 \break
+      f4 g c,2
+    }
+    \new Staff {
+      \clef bass
+      c,4 d e f \break
+      g1 \break
+      f4 g c,2
+    }
+  >>
+>>
+@end lilypond
+
 @cindex ossia
 
 @noindent
@@ -1507,4 +1550,3 @@ between @code{Voice} and @code{CueVoice} contexts.  When using
 @code{\cueDuringWithClef} or @code{\transposedCueDuring} the extra
 argument required for each case must come after the quote and the
 direction.
-
