@@ -892,7 +892,7 @@ and will be applied to NUM."
 ;; lilypond version
 
 (define (version-list-compare? op a b)
-  "Lexicographically compare to lists @var{a} and @var{b} using
+  "Lexicographically compare two lists @var{a} and @var{b} using
    the operator @var{op}. The types of the list elements have to
    be comparable with @var{op}. If the lists are of different length
    the trailing elements of the longer list are ignored."
