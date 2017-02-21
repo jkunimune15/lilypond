@@ -905,13 +905,11 @@ and will be applied to NUM."
             (loop (car a) (car b) (cdr a) (cdr b))
             axb)))))
 
-(define (ly:version? op . ver)
-  "Compare the currently executed LilyPond version with a given version
-   @var{ver} using the operator @var{op}. @var{ver} may be passed as a
-   sequence or a list of numbers with up to three elements."
-  (lexicographic-list-compare? op (ly:version)
-    (if (and (= 1 (length ver)) (list? (car ver)))
-        (car ver) ver)))
+(define (ly:version? op ver)
+  "Using the operator @var{op} compare the currently executed LilyPond
+   version with a given version @var{ver} which is passed as a list of 
+   numbers."
+  (lexicographic-list-compare? op (ly:version) ver))
 
 ;;;;;;;;;;;;;;;;
 ;; other
