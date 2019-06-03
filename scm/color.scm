@@ -852,7 +852,8 @@
             (let*
                 ((temp-1 (assq-ref color-list arg-sym))
                  (temp (if temp-1 temp-1 '(0 0 0))))
-              (ly:warning (format "Color '~a' is not defined!" arg-sym))
+                (if (not temp-1)
+                    (ly:warning (format "Color '~a' is not defined!" arg-sym)))
               (hashq-create-handle! color-table arg-sym temp)
               temp))))))
 
